@@ -4,7 +4,6 @@
 # ignore all local configuration
 conf/local/**
 !conf/local/.gitkeep
-.telemetry
 
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
@@ -14,9 +13,15 @@ data/**
 
 # except their sub-folders
 !data/**/
+.git/
 
 # also keep all .gitkeep files
 !.gitkeep
+
+# also keep the example dataset
+!data/01_raw/companies.csv
+!data/01_raw/reviews.csv
+!data/01_raw/shuttles.xlsx
 
 # ignore kedro-viz metadata
 .viz
@@ -87,8 +92,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-
-# Installer logs
+screenshots_bd_project/**
 pip-log.txt
 pip-delete-this-directory.txt
 
@@ -125,13 +129,9 @@ docs/_build/
 
 # PyBuilder
 target/
-
+tests/*
 # Jupyter Notebook
 .ipynb_checkpoints
-
-# IPython
-.ipython/profile_default/history.sqlite
-.ipython/profile_default/startup/README
 
 # pyenv
 .python-version
@@ -144,7 +144,6 @@ celerybeat-schedule
 
 # Environments
 .env
-.envrc
 .venv
 env/
 venv/
