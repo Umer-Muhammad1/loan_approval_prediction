@@ -158,6 +158,13 @@ y_test:
   type: pandas.CSVDataset
   filepath: data/04_feature/y_test.csv
 
+loan_amt_train:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/loan_amt_train.csv
+
+loan_amt_test:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/loan_amt_test.csv
 
 X_train_encoded:
   type: pandas.CSVDataset
@@ -181,7 +188,49 @@ model_paths:
   type: pickle.PickleDataset
   filepath: data/04_models/model_paths.pkl
 
+#y_pred:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/y_pred.pkl
+
+y_pred:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pickle.PickleDataset  # or any valid kedro DataSet
+      filepath: data/07_model_output/y_pred.pkl
+      #save_args:
+       # index: False
+
+
+#y_pred_proba:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/y_pred_proba.pkl
+
+
+y_pred_proba:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pickle.PickleDataset  # or any valid kedro DataSet
+      filepath: data/07_model_output/y_pred_proba.pkl
+     # save_args:
+      #  index: False
+
+#xgb_results:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/xgb_results.pkl
+
 
 xgb_results:
-  type: pickle.PickleDataset
-  filepath: data/07_model_output/xgb_results.pkl
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pickle.PickleDataset  # or any valid kedro DataSet
+      filepath: data/07_model_output/xgb_results.pkl
+      #save_args:
+      #  index: False
+roc_curve_plot:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: matplotlib.MatplotlibDataset
+      filepath: data/temp/fraud_detection/roc_curve_plot.png
+      save_args:
+        format: png
+        dpi: 300

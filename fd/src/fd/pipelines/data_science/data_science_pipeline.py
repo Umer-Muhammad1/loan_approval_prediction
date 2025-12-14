@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node
 
 from .data_science_node import (filter_data , feature_target_split, train_test_df_split, scale_features,
-                                one_hot_encode, train_evaluate_xgb)
+                                one_hot_encode, train_evaluate_xgb , plot_roc_curve)
 def create_pipeline(**kwargs):
     data_science_pipeline= Pipeline(
         [
@@ -22,7 +22,7 @@ def create_pipeline(**kwargs):
             node(
                 func=train_test_df_split,
                 inputs=["features", "target", "params:test_size", "params:random_state"],
-                outputs=["X_train", "X_test", "y_train", "y_test"],
+                outputs=["X_train", "X_test", "y_train", "y_test" , "loan_amt_train", "loan_amt_test"],
                 name="split_data_node",
             ),
             node(
@@ -40,8 +40,14 @@ def create_pipeline(**kwargs):
             node(
                 func=train_evaluate_xgb,
                 inputs=["X_train_scaled", "y_train", "X_test_scaled", "y_test", "params:xgb_params"],
-                outputs="xgb_results",
+                outputs=["xgb_results","test_accuracy", "test_auc", "cv_scores", "feature_importance","y_pred", "y_pred_proba"],
                 name="train_evaluate_xgb_node",
+            ),
+            node(
+                func=plot_roc_curve,
+                inputs=["y_test",  "y_pred_proba"],
+                outputs="roc_curve_plot",
+                name="roc_curve_node",
             ),
             
         ]
