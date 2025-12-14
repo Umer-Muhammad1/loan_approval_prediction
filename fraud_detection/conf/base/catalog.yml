@@ -59,8 +59,12 @@ categorical_features_by_loan_status:
   type: matplotlib.MatplotlibDataset
   filepath: data/08_reporting/categorical_features_by_loan_status.png
   versioned: true
-
-
+#distribution_plot:
+#    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#    fallback:
+#      type: matplotlib.MatplotlibDataset
+#      filepath: data/08_reporting/plots/distribution_plot.png
+#      versioned: true
 distribution_plot:
     type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
     dataset:
