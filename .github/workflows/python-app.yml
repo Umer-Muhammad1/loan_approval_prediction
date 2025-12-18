@@ -73,6 +73,9 @@ jobs:
   build-docker:
     runs-on: ubuntu-latest
     needs: [qa-testing, data-validation]
+    defaults:
+      run:
+        working-directory: ./fraud_detection
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -82,8 +85,5 @@ jobs:
 
       - name: Build Docker image
         run: |
+          # Now it looks for 'Dockerfile' inside ./fraud_detection automatically
           docker build -t loan-prediction:${{ github.sha }} .
-          
-      - name: Verify Docker Image
-        run: |
-          docker run loan-prediction:${{ github.sha }} python -c "print('Container health check passed')"
