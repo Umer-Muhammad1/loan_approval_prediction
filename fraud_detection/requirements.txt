@@ -3,7 +3,7 @@ jupyterlab>=3.0
 notebook
 kedro ==1.0.0
 
-kedro-viz~=12.2.0
+kedro-viz==12.1.0
 mlflow ~= 3.7.0
 kedro-mlflow == 2.0.0
 kedro_datasets == 9.0.0
