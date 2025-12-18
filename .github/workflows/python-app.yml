@@ -42,7 +42,10 @@ jobs:
     
     - name: Run tests
       run: |
+        cd fraud_detection
         pytest fraud_detection/tests/ -v --cov=src --cov-report=xml
+      #run: |
+      #  pytest fraud_detection/tests/ -v --cov=src --cov-report=xml
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
