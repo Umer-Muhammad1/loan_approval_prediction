@@ -1,0 +1,226 @@
+# Here you can define all your datasets by using simple YAML syntax.
+#
+# Documentation for this file format can be found in "The Data Catalog"
+# Link: https://docs.kedro.org/en/stable/data/data_catalog.html
+raw_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/raw_loan_prediction.csv
+
+data_without_duplicates:
+
+    type: pandas.CSVDataset  # or any valid kedro DataSet
+    filepath: data/02_intermediate/data_without_duplicates.csv
+    save_args:
+      index: False
+
+#data_without_duplicates:
+#  type: pandas.CSVDataset
+#  filepath: data/02_intermediate/data_without_duplicates.csv
+  
+#correlation_matrix:
+#  type: pandas.CSVDataset
+#  filepath: data/02_intermediate/correlation_matrix.csv
+
+#correlation_matrix:
+#  type: pandas.CSVDataset
+#  filepath: data/02_intermediate/outliers_plot.csv
+
+
+correlation_matrix_by_order:
+  type: matplotlib.MatplotlibDataset
+  filepath: data/08_reporting/correlation_matrix_by_order.png
+  save_args:
+    format: png
+
+
+correlation_matrix:
+  type: matplotlib.MatplotlibDataset
+  filepath: data/08_reporting/correlation_matrix.png
+  save_args:
+    format: png 
+
+
+
+#columns_outliers_plot:
+#  type: matplotlib.MatplotlibDataset
+#  filepath: data/08_reporting/outliers_all_columns.png
+#  versioned: true
+columns_outliers_plot:
+    type: matplotlib.MatplotlibDataset
+    filepath: data/temp/fraud_detection/columns_outliers_plot.png
+    save_args:
+      format: png
+      dpi: 300
+
+categorical_features_by_loan_status:
+  type: matplotlib.MatplotlibDataset
+  filepath: data/08_reporting/categorical_features_by_loan_status.png
+  versioned: true
+#distribution_plot:
+#    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#    fallback:
+#      type: matplotlib.MatplotlibDataset
+#      filepath: data/08_reporting/plots/distribution_plot.png
+#      versioned: true
+distribution_plot:
+
+    type: matplotlib.MatplotlibDataset
+    filepath: data/temp/fraud_detection/distribution_plot.png
+    save_args:
+      format: png
+      dpi: 300
+
+#distribution_plot:
+#  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#    dataset: matplotlib.MatplotlibDataset
+#      filepath: data/08_reporting/distribution_plot.png
+#      versioned: true
+##distribution_plot:
+##  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+##  dataset:
+##    type: matplotlib.MatplotlibWriter
+##    filepath: data/08_reporting/distribution_plot.png
+##    save_args:
+##      format: png
+#  #artifact_path: plots
+#distribution_plot:
+#  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#  filepath: distribution_plot.png
+
+
+#categorical_features_distribution_plot:
+#  type: matplotlib.MatplotlibDataset
+#  filepath: data/08_reporting/categorical_features_distribution_plot.png
+#  versioned: true
+
+categorical_features_distribution_plot:
+    type: matplotlib.MatplotlibDataset
+    filepath: data/temp/fraud_detection/categorical_features_distribution_plot.png
+    save_args:
+      format: png
+      dpi: 300
+
+categorical_relation_plot:
+  type: matplotlib.MatplotlibDataset
+  filepath: data/08_reporting/categorical_relation_plot.png
+  versioned: true
+
+categorical_relation_plot_grade:
+  type: matplotlib.MatplotlibDataset
+  filepath: data/08_reporting/categorical_relation_plot_grade.png
+  versioned: true
+
+#kde_histogram:
+#  type: matplotlib.MatplotlibDataset
+#  filepath: data/08_reporting/kde_histogram.png
+#  versioned: true
+kde_histogram:
+    type: matplotlib.MatplotlibDataset
+    filepath: data/temp/fraud_detection/kde_histogram.png
+    save_args:
+      format: png
+      dpi: 300
+
+
+
+filtered_data:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/filtered_data.csv
+
+features:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/features.csv
+
+
+target:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/target.csv
+
+
+
+X_train:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/X_train.csv
+
+X_test:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/X_test.csv
+
+y_train:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/y_train.csv
+
+y_test:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/y_test.csv
+
+loan_amt_train:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/loan_amt_train.csv
+
+loan_amt_test:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/loan_amt_test.csv
+
+X_train_encoded:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/encoded_X_train.csv
+
+X_test_encoded:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/encoded_X_test.csv
+
+
+X_train_scaled:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/scaled_X_train.csv
+
+X_test_scaled:
+  type: pandas.CSVDataset
+  filepath: data/04_feature/scaled_X_test.csv
+
+
+model_paths:
+  type: pickle.PickleDataset
+  filepath: data/04_models/model_paths.pkl
+
+#y_pred:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/y_pred.pkl
+
+y_pred:
+  type: pickle.PickleDataset  # or any valid kedro DataSet
+  filepath: data/07_model_output/y_pred.pkl
+  #save_args:
+   # index: False
+
+#y_pred_proba:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/y_pred_proba.pkl
+
+
+y_pred_proba:
+
+    type: pickle.PickleDataset  # or any valid kedro DataSet
+    filepath: data/07_model_output/y_pred_proba.pkl
+     # save_args:
+      #  index: False
+
+#xgb_results:
+#  type: pickle.PickleDataset
+#  filepath: data/07_model_output/xgb_results.pkl
+
+
+xgb_results:
+    
+    type: pickle.PickleDataset  # or any valid kedro DataSet
+    filepath: data/07_model_output/xgb_results.pkl
+      #save_args:
+      #  index: False
+roc_curve_plot:
+
+    type: matplotlib.MatplotlibDataset
+    filepath: data/temp/fraud_detection/roc_curve_plot.png
+    save_args:
+      format: png
+      dpi: 300

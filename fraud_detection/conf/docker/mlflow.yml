@@ -1,0 +1,13 @@
+server:
+  mlflow_tracking_uri: file:///app/mlruns
+
+tracking:
+  disable_tracking:
+    pipelines: []
+  experiment:
+    name: fraud_detection
+    restore_if_deleted: true
+  
+ui:
+  port: "5000"
+  host: "0.0.0.0"

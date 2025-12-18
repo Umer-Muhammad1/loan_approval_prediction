@@ -2,6 +2,15 @@
 from the Kedro defaults. For further information, including these default values, see
 https://docs.kedro.org/en/stable/kedro_project_setup/settings.html."""
 
+import os
+from omegaconf import OmegaConf
+
+# Register the oc.env resolver
+if not OmegaConf.has_resolver("oc.env"):
+    OmegaConf.register_new_resolver(
+        "oc.env", 
+        lambda key, default=None: os.getenv(key, default)
+    )
 # Instantiated project hooks.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from fd.hooks import ProjectHooks

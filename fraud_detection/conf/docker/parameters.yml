@@ -1,0 +1,52 @@
+output_path: "data/08_reporting/correlation_matrix.png"
+output_path2: "data/08_reporting/correlation_matrix_by_order.png"
+output_path1: "data/08_reporting/outliers_plot.png"
+
+categorical_features: ['person_home_ownership', 'loan_grade', 'loan_intent', 'cb_person_default_on_file']
+continuous_feature: person_age
+hue_feature: loan_status
+
+
+
+hist_columns:
+  - person_age
+  - person_income
+  - loan_amnt
+  - loan_int_rate
+  - person_emp_length
+  - cb_person_cred_hist_length
+
+hue_column: loan_status
+
+test_size: 0.2
+random_state: 42
+
+cat_cols: ['person_home_ownership', 'loan_intent', 'loan_grade']
+stand_col: ['person_age', 'person_income','person_emp_length', 'loan_amnt','loan_int_rate', 'loan_percent_income','cb_person_cred_hist_length']
+
+
+
+
+xgb_params:
+  n_estimators: 100
+  learning_rate: 0.1
+  max_depth: 6
+  use_label_encoder: false
+  eval_metric: "logloss"
+
+models_params:
+  LogisticRegression:
+    C: 1.0
+    solver: liblinear
+    max_iter: 100
+  XGBoost:
+    n_estimators: 100
+    learning_rate: 0.1
+    use_label_encoder: false
+    verbosity: 1
+  LinearSVC:
+    C: 1.0
+    kernel: linear
+    probability: true
+  KNeighborsClassifier:
+    n_neighbors: 5
