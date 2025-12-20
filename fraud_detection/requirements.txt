@@ -1,15 +1,13 @@
-ipython>=8.10
-jupyterlab>=3.0
-notebook
-kedro~=1.1.1
+kedro == 1.1.1
 
-kedro-viz~=12.2.0
-mlflow ~= 3.7.0
-kedro-mlflow == 2.0.0
-kedro_datasets == 9.0.0
+kedro-viz==12.2.0
+mlflow == 3.7.0
+kedro_mlflow == 2.0.0
+kedro-datasets == 9
 seaborn == 0.13.2
 xgboost == 3.1.2
-kedro-docker == 0.6.2
+
 
 pytest == 9.0.2      
-pytest-cov==7.0.0                                                                        
+pytest-cov==7.0.0   
+                                                                    

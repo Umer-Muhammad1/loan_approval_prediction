@@ -1,0 +1,13 @@
+services:
+  kedro:
+    image: fd1
+    container_name: fraud_detection_kedro
+    working_dir: /app
+    user: root
+    volumes:
+      - .:/app
+      - ./mlruns:/app/mlruns
+      - ./data:/app/data
+    environment:
+      KEDRO_ENV: docker
+    command: ["kedro", "run"]
