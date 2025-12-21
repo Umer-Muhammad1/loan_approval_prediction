@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, node
 
-from .eda_nodes import (generate_correlation_heatmap_by_order, plot_outliers_all_columns, plot_correlation_matrix,
+from .dp_nodes import (generate_correlation_heatmap_by_order, plot_outliers_all_columns, plot_correlation_matrix,
 plot_loan_acceptance_by_categorical_features, plot_distributions , remove_duplicates , plot_categorical_distributions,
 plot_categorical_relations, plot_categorical_relations_grade, plot_histograms_kde)
 
@@ -14,12 +14,6 @@ def create_pipeline(**kwargs):
                 name="correlation"
                 )
             ,
-            node(
-                func=remove_duplicates,
-                inputs=["raw_data"],
-                outputs="data_without_duplicates",
-                name="removing_duplicates"
-            ),
             node(
                 func=plot_outliers_all_columns,
                 inputs=["raw_data"],

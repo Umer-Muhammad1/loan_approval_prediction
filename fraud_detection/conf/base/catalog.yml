@@ -238,3 +238,85 @@ roc_curve_plot:
       save_args:
         format: png
         dpi: 300
+      
+
+lr_model:
+  type: pickle.PickleDataset 
+  filepath: data/06_models/lr_model.pkl
+  backend: pickle
+  versioned: true
+
+rf_model:
+  type: pickle.PickleDataset 
+  filepath: data/06_models/rf_model.pkl
+  backend: pickle
+  versioned: true
+
+xgb_model:
+  type: pickle.PickleDataset 
+  filepath: data/06_models/xgb_model.pkl
+  backend: pickle
+  versioned: true
+
+best_model:
+  type: pickle.PickleDataset 
+  filepath: data/06_models/best_model.pkl
+  backend: pickle
+  versioned: true
+
+# ==================== MODEL METADATA ====================
+lr_run_id:
+  type: text.TextDataset
+  filepath: data/08_reporting/lr_run_id.txt
+
+rf_run_id:
+  type: text.TextDataset
+  filepath: data/08_reporting/rf_run_id.txt
+
+xgb_run_id:
+  type: text.TextDataset
+  filepath: data/08_reporting/xgb_run_id.txt
+
+best_run_id:
+  type: text.TextDataset
+  filepath: data/08_reporting/best_run_id.txt
+
+best_model_name:
+  type: text.TextDataset
+  filepath: data/08_reporting/best_model_name.txt
+
+# ==================== MODEL SCORES ====================
+all_model_scores:
+  type: json.JSONDataset
+  filepath: data/08_reporting/all_model_scores.json
+
+cv_scores:
+  type: pickle.PickleDataset
+  filepath: data/08_reporting/cv_scores.pkl
+
+cv_mean:
+  type: yaml.YAMLDataset
+  filepath: data/08_reporting/cv_mean.yml
+
+cv_std:
+  type: yaml.YAMLDataset
+  filepath: data/08_reporting/cv_std.yml
+
+# ==================== FINAL RESULTS ====================
+final_model_results:
+  type: pickle.PickleDataset
+  filepath: data/08_reporting/final_model_results.pkl
+  versioned: true
+
+# Alternative: Store predictions separately
+predictions:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/predictions.csv
+  save_args:
+    index: false
+
+predictions_proba:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/predictions_proba.csv
+  save_args:
+    index: false

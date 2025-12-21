@@ -1,10 +1,17 @@
 from kedro.pipeline import Pipeline, node
 
-from .data_science_node import (filter_data , feature_target_split, train_test_df_split, scale_features,
-                                one_hot_encode, train_evaluate_xgb , plot_roc_curve)
+from .de_nodes import ( remove_duplicates ,filter_data , feature_target_split, train_test_df_split, scale_features,
+                                one_hot_encode)
+
 def create_pipeline(**kwargs):
-    data_science_pipeline= Pipeline(
+    data_engineering_pipeline= Pipeline(
         [
+            node(
+                func=remove_duplicates,
+                inputs=["raw_data"],
+                outputs="data_without_duplicates",
+                name="removing_duplicates"
+            ),
             node(
                 func=filter_data, 
                 inputs=["data_without_duplicates"],
@@ -37,19 +44,8 @@ def create_pipeline(**kwargs):
                 outputs=["X_train_scaled", "X_test_scaled"],
                 name="scale_features_node",
             ),
-            node(
-                func=train_evaluate_xgb,
-                inputs=["X_train_scaled", "y_train", "X_test_scaled", "y_test", "params:xgb_params"],
-                outputs=["xgb_results","test_accuracy", "test_auc", "cv_scores", "feature_importance","y_pred", "y_pred_proba"],
-                name="train_evaluate_xgb_node",
-            ),
-            node(
-                func=plot_roc_curve,
-                inputs=["y_test",  "y_pred_proba"],
-                outputs="roc_curve_plot",
-                name="roc_curve_node",
-            ),
-            
+
+
         ]
     )
-    return data_science_pipeline
+    return data_engineering_pipeline

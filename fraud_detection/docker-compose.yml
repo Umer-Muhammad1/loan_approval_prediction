@@ -11,3 +11,7 @@ services:
     environment:
       KEDRO_ENV: docker
     command: ["kedro", "run"]
+
+# docker compose build --no-cache
+# docker compose up
+# docker compose down

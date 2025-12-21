@@ -2,33 +2,89 @@
 This is a boilerplate pipeline 'bussiness_metrics'
 generated using Kedro 0.19.10
 """
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix , roc_curve , auc
+import matplotlib.pyplot as plt
+import pandas as pd
+from typing import Optional
+import pandas as pd
+from typing import Optional
 
-#def split_data(processed_data, params):
-#    """
-#    Split data into train and test sets
-#    Keep loan_amount separately for business calculations
-#    """
-#    from sklearn.model_selection import train_test_split
-#    
-#    # Separate features and target
-#    X = processed_data.drop(['loan_status'], axis=1)
-#    y = processed_data['loan_status']
-#    
-#    # Extract loan_amount before dropping it from features (if needed)
-#    loan_amounts = processed_data['loan_amount'].copy()
-#    
-#    # Split data
-#    X_train, X_test, y_train, y_test, loan_amt_train, loan_amt_test = train_test_split(
-#        X, y, loan_amounts,
-#        test_size=params['test_size'],
-#        random_state=params['random_state'],
-#        stratify=y
-#    )
-#    
-#    return X_train, X_test, y_train, y_test, loan_amt_train, loan_amt_test
-# src/loan_prediction/pipelines/business/nodes.py
-def calculate_business_impact(y_test, y_pred, y_pred_proba, loan_amt_test):
+
+def generate_feature_importance(
+    final_model_results: dict,
+    X_train: pd.DataFrame
+) -> Optional[pd.DataFrame]:
+
+    model = final_model_results["model"]
+
+    if not hasattr(model, "feature_importances_"):
+        return None
+
+    feature_importance = (
+        pd.DataFrame({
+            "feature": X_train.columns,
+            "importance": model.feature_importances_
+        })
+        .sort_values("importance", ascending=False)
+    )
+
+    return feature_importance
+
+
+def plot_feature_importance(
+    feature_importance: Optional[pd.DataFrame],
+    top_n: int = 20
+) -> plt.Figure:
+    """
+    Generate a feature importance bar plot.
+
+    Args:
+        feature_importance: DataFrame with columns ['feature', 'importance']
+        top_n: Number of top features to plot
+
+    Returns:
+        matplotlib Figure
+    """
+
+    if feature_importance is None or feature_importance.empty:
+        raise ValueError("Feature importance data is empty or None.")
+
+    top_features = feature_importance.head(top_n)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(
+        top_features["feature"][::-1],
+        top_features["importance"][::-1]
+    )
+
+    ax.set_title(f"Top {top_n} Feature Importances")
+    ax.set_xlabel("Importance")
+    ax.set_ylabel("Feature")
+
+    plt.tight_layout()
+    return fig
+
+def generate_roc_auc_plot(
+    final_model_results: dict
+) -> plt.Figure:
+
+    y_true = final_model_results["y_true"]
+    y_pred_proba = final_model_results["predictions_proba"]
+
+    fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
+    roc_auc = auc(fpr, tpr)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(fpr, tpr, label=f"ROC AUC = {roc_auc:.4f}")
+    ax.plot([0, 1], [0, 1], linestyle="--")
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("ROC Curve")
+    ax.legend(loc="lower right")
+
+    return fig
+
+def calculate_business_impact(y_test, y_pred,  loan_amt_test):
     """
     Enhanced business metrics with realistic ROI calculations
     
