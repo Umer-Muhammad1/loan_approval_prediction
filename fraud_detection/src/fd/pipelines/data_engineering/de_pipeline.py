@@ -1,14 +1,21 @@
 from kedro.pipeline import Pipeline, node
 
-from .de_nodes import ( remove_duplicates ,filter_data , feature_target_split, train_test_df_split, scale_features,
+from .de_nodes import ( quick_validate_csv, remove_duplicates ,filter_data , feature_target_split, train_test_df_split, scale_features,
                                 one_hot_encode)
 
 def create_pipeline(**kwargs):
     data_engineering_pipeline= Pipeline(
         [
             node(
+                func=quick_validate_csv,
+                inputs="raw_data",
+                outputs="validated_loan_data",
+                name="data_validation_gatekeeper",
+                tags="data_engineering",
+            ),
+            node(
                 func=remove_duplicates,
-                inputs=["raw_data"],
+                inputs=["validated_loan_data"],
                 outputs="data_without_duplicates",
                 name="removing_duplicates",
                 tags="data_engineering",

@@ -6,6 +6,10 @@ raw_data:
   type: pandas.CSVDataset
   filepath: data/01_raw/raw_loan_prediction.csv
 
+validated_loan_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/validated_loan_data.csv
+
 data_without_duplicates:
     type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
     dataset:

@@ -9,7 +9,7 @@ def create_pipeline(**kwargs):
         [
             node(
                 func=generate_correlation_heatmap_by_order, 
-                inputs=["raw_data", "params:output_path2"],
+                inputs=["validated_loan_data", "params:output_path2"],
                 outputs="correlation_matrix_by_order", 
                 name="correlation",
                 tags=["visualisations", "data_exploration"],
@@ -17,14 +17,14 @@ def create_pipeline(**kwargs):
             ,
             node(
                 func=plot_outliers_all_columns,
-                inputs=["raw_data"],
+                inputs=["validated_loan_data"],
                 outputs="columns_outliers_plot",
                 name="plot_outliers_all_columns_node",
                 tags=["visualisations", "data_exploration"],
             ),
             node(
                 func= plot_correlation_matrix,
-                inputs=["raw_data"],
+                inputs=["validated_loan_data"],
                 outputs= "correlation_matrix",
                 name= "correlation_matrix",
                 tags=["visualisations", "data_exploration"],
@@ -32,7 +32,7 @@ def create_pipeline(**kwargs):
             ),
             node(
                 func= plot_loan_acceptance_by_categorical_features,
-                inputs=["raw_data", 'params:categorical_features'],
+                inputs=["validated_loan_data", 'params:categorical_features'],
                 outputs= None,
                 name= "categorical_features_by_loan_status",
                 tags=["visualisations", "data_exploration"],
@@ -40,7 +40,7 @@ def create_pipeline(**kwargs):
             ),
             node(
                 func=plot_distributions,
-                inputs=["raw_data"],
+                inputs=["validated_loan_data"],
                 outputs="distribution_plot",
                 name="plot_distributions_node",
                 tags=["visualisations", "data_exploration"],
