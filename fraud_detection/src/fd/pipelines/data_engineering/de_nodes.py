@@ -108,9 +108,9 @@ def validate_loan_data(df: pd.DataFrame):
 
     # 8. Run and Return
     results = validator.validate()
-    # Visualization
-    context.build_data_docs()
-    context.open_data_docs()
+    # Visualization TODO
+    #context.build_data_docs()
+    #context.open_data_docs()
     
     if results["success"]:
             print("✅ Data Quality Validated!")
@@ -140,6 +140,29 @@ def quick_validate_csv(data: pd.DataFrame) -> pd.DataFrame:
 
 
 
+def cast_loan_data_types(df: pd.DataFrame) -> pd.DataFrame:
+    # 1. Categorical casting (The big memory winners)
+    cat_cols = [
+        "person_home_ownership", "loan_intent", 
+        "loan_grade", "cb_person_default_on_file"
+    ]
+    for col in cat_cols:
+        df[col] = df[col].astype("category")
+
+    # 2. Downcasting Integers (The precision fix)
+    df["person_age"] = df["person_age"].astype("int8")
+    df["loan_status"] = df["loan_status"].astype("int8")
+    df["id"] = df["id"].astype("int32")
+    df["person_income"] = df["person_income"].astype("int32")
+    df["cb_person_cred_hist_length"] = df["cb_person_cred_hist_length"].astype("int8")
+
+    # 3. Downcasting Floats
+    float_cols = ["person_emp_length", "loan_int_rate", "loan_percent_income"]
+    for col in float_cols:
+        df[col] = df[col].astype("float32")
+
+    print("✅ Schema optimized for Docker/API deployment.")
+    return df
 
 #def validate_loan_data(data):
 #    """Use in your Kedro pipeline"""

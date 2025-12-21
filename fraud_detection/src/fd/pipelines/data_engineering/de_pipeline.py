@@ -1,6 +1,6 @@
 from kedro.pipeline import Pipeline, node
 
-from .de_nodes import ( quick_validate_csv, remove_duplicates ,filter_data , feature_target_split, train_test_df_split, scale_features,
+from .de_nodes import ( quick_validate_csv, cast_loan_data_types,remove_duplicates ,filter_data , feature_target_split, train_test_df_split, scale_features,
                                 one_hot_encode)
 
 def create_pipeline(**kwargs):
@@ -14,8 +14,16 @@ def create_pipeline(**kwargs):
                 tags="data_engineering",
             ),
             node(
-                func=remove_duplicates,
+                func=cast_loan_data_types,
                 inputs=["validated_loan_data"],
+                outputs="datatypes_casted_data",
+                name="data_types_casted",
+                tags="data_engineering",
+            
+            ),
+            node(
+                func=remove_duplicates,
+                inputs=["datatypes_casted_data"],
                 outputs="data_without_duplicates",
                 name="removing_duplicates",
                 tags="data_engineering",
