@@ -26,7 +26,7 @@ def create_pipeline(**kwargs):
                 inputs="feature_importance",
                 outputs="feature_importance_plot",
                 name="feature_importance_plot_node",
-                tags=["evaluation", "visualization"],
+                tags=["evaluation","visualisations"],
             ),
 
             node(
@@ -34,19 +34,21 @@ def create_pipeline(**kwargs):
                 inputs="final_model_results",
                 outputs="roc_auc_plot",
                 name="roc_auc_plot_node",
-                tags=["evaluation", "visualization"],
+                tags=["evaluation", "visualisations"],
             ),
             node(
                 func=calculate_business_impact, 
                 inputs=["y_test", "y_pred", "loan_amt_test"],
                 outputs="bussiness_metrics", 
-                name="business_metrics_node"
+                name="business_metrics_node",
+                tags=["bussiness"]
                 ),
             node(
                 func=visualize_business_metrics, 
                 inputs="bussiness_metrics",
                 outputs="plot_bussiness_metrics", 
-                name="visualize_business_metrics_node"
+                name="visualize_business_metrics_node",
+                tags=["bussiness","visualisations"]
                 )
             
             ])

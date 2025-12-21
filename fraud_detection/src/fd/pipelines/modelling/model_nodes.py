@@ -43,7 +43,7 @@ def train_logistic_regression(
         run_id: MLflow run ID
     """
     # Clean up any active runs
-    ensure_no_active_run()
+    #ensure_no_active_run()
     
     run_name = f"lr_loan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     print(f"\n{'='*60}")
@@ -51,43 +51,43 @@ def train_logistic_regression(
     print(f"{'='*60}")
     print(f"Parameters: {lr_params}")
     
-    with mlflow.start_run(run_name=run_name) as run:
+    #with mlflow.start_run(run_name=run_name) as run:
         # Log parameters
-        mlflow.log_params(lr_params)
-        mlflow.log_metric("train_samples", len(X_train))
-        mlflow.log_metric("positive_class_ratio", y_train.mean())
+       # mlflow.log_params(lr_params)
+       # mlflow.log_metric("train_samples", len(X_train))
+       # mlflow.log_metric("positive_class_ratio", y_train.mean())
         
         # Train model
-        print("Training Logistic Regression...")
-        lr_model = LogisticRegression(**lr_params)
-        lr_model.fit(X_train, y_train)
-        
-        # Quick validation score on training data
-        train_pred = lr_model.predict(X_train)
-        train_accuracy = accuracy_score(y_train, train_pred)
-        train_proba = lr_model.predict_proba(X_train)[:, 1]
-        train_auc = roc_auc_score(y_train, train_proba)
-        
-        mlflow.log_metric("train_accuracy", train_accuracy)
-        mlflow.log_metric("train_auc", train_auc)
-        
-        # Log model
-        mlflow.sklearn.log_model(
-            lr_model,
-            artifact_path="model",
-            registered_model_name="loan_lr_model"
-        )
+    print("Training Logistic Regression...")
+    lr_model = LogisticRegression(**lr_params)
+    lr_model.fit(X_train, y_train)
+    
+    # Quick validation score on training data
+    train_pred = lr_model.predict(X_train)
+    train_accuracy = accuracy_score(y_train, train_pred)
+    train_proba = lr_model.predict_proba(X_train)[:, 1]
+    train_auc = roc_auc_score(y_train, train_proba)
+    
+    mlflow.log_metric("train_accuracy_lr", train_accuracy)
+    mlflow.log_metric("train_auc_lr", train_auc)
+    
+    # Log model
+    mlflow.sklearn.log_model(
+        lr_model,
+        artifact_path="model",
+        registered_model_name="loan_lr_model"
+    )
         
         # Add tags
-        mlflow.set_tag("model_type", "Logistic Regression")
-        mlflow.set_tag("task", "binary_classification")
-        mlflow.set_tag("stage", "training")
+      #  mlflow.set_tag("model_type", "Logistic Regression")
+      #  mlflow.set_tag("task", "binary_classification")
+      #  mlflow.set_tag("stage", "training")
         
-        run_id = run.info.run_id
-        print(f"✅ Logistic Regression trained | Run ID: {run_id}")
-        print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
-        
-        return lr_model, run_id
+    #run_id = run_name.info.run_id
+    #print(f"✅ Logistic Regression trained | Run ID: {run_id}")
+    print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
+    
+    return lr_model #, run_id
 
 
 def train_random_forest(
@@ -103,7 +103,7 @@ def train_random_forest(
         run_id: MLflow run ID
     """
     # Clean up any active runs
-    ensure_no_active_run()
+    #ensure_no_active_run()
     
     run_name = f"rf_loan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     print(f"\n{'='*60}")
@@ -111,53 +111,53 @@ def train_random_forest(
     print(f"{'='*60}")
     print(f"Parameters: {rf_params}")
     
-    with mlflow.start_run(run_name=run_name) as run:
+    #with mlflow.start_run(run_name=run_name) as run:
         # Log parameters
-        mlflow.log_params(rf_params)
-        mlflow.log_metric("train_samples", len(X_train))
-        mlflow.log_metric("positive_class_ratio", y_train.mean())
+        #mlflow.log_params(rf_params)
+        #mlflow.log_metric("train_samples", len(X_train))
+        #mlflow.log_metric("positive_class_ratio", y_train.mean())
         
-        # Train model
-        print("Training Random Forest...")
-        rf_model = RandomForestClassifier(**rf_params)
-        rf_model.fit(X_train, y_train)
-        
-        # Quick validation score
-        train_pred = rf_model.predict(X_train)
-        train_accuracy = accuracy_score(y_train, train_pred)
-        train_proba = rf_model.predict_proba(X_train)[:, 1]
-        train_auc = roc_auc_score(y_train, train_proba)
-        
-        mlflow.log_metric("train_accuracy", train_accuracy)
-        mlflow.log_metric("train_auc", train_auc)
-        
-        # Feature importance
-        feature_importance = pd.DataFrame({
-            'feature': X_train.columns,
-            'importance': rf_model.feature_importances_
-        }).sort_values('importance', ascending=False)
-        
-        # Log top 10 features
-        for idx, row in feature_importance.head(10).iterrows():
-            mlflow.log_metric(f"feature_importance_{row['feature']}", row['importance'])
-        
-        # Log model
-        mlflow.sklearn.log_model(
-            rf_model,
-            artifact_path="model",
-            registered_model_name="loan_rf_model"
-        )
-        
-        # Add tags
-        mlflow.set_tag("model_type", "Random Forest")
-        mlflow.set_tag("task", "binary_classification")
-        mlflow.set_tag("stage", "training")
-        
-        run_id = run.info.run_id
-        print(f"✅ Random Forest trained | Run ID: {run_id}")
-        print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
-        
-        return rf_model, run_id
+    # Train model
+    print("Training Random Forest...")
+    rf_model = RandomForestClassifier(**rf_params)
+    rf_model.fit(X_train, y_train)
+    
+    # Quick validation score
+    train_pred = rf_model.predict(X_train)
+    train_accuracy = accuracy_score(y_train, train_pred)
+    train_proba = rf_model.predict_proba(X_train)[:, 1]
+    train_auc = roc_auc_score(y_train, train_proba)
+    
+    mlflow.log_metric("train_accuracy_rf", train_accuracy)
+    mlflow.log_metric("train_auc_rf", train_auc)
+    
+    # Feature importance
+    #feature_importance = pd.DataFrame({
+    #    'feature': X_train.columns,
+    #    'importance': rf_model.feature_importances_
+    #}).sort_values('importance', ascending=False)
+    #
+    ## Log top 10 features
+    #for idx, row in feature_importance.head(10).iterrows():
+    #    mlflow.log_metric(f"feature_importance_{row['feature']}", row['importance'])
+    
+    # Log model
+    mlflow.sklearn.log_model(
+        rf_model,
+        artifact_path="model",
+        registered_model_name="loan_rf_model"
+    )
+    
+    # Add tags
+    #mlflow.set_tag("model_type", "Random Forest")
+    #mlflow.set_tag("task", "binary_classification")
+    #mlflow.set_tag("stage", "training")
+    
+    #run_id = run.info.run_id
+    #print(f"✅ Random Forest trained | Run ID: {run_id}")
+    print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
+    
+    return rf_model    #, run_id
 
 
 def train_xgboost(
@@ -173,42 +173,54 @@ def train_xgboost(
         run_id: MLflow run ID
     """
     # Clean up any active runs
-    ensure_no_active_run()
+    #ensure_no_active_run()
     
-    run_name = f"xgb_loan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    print(f"\n{'='*60}")
-    print(f"Training XGBoost: {run_name}")
-    print(f"{'='*60}")
-    print(f"Raw parameters: {xgb_params}")
+    #run_name = f"xgb_loan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    #print(f"\n{'='*60}")
+    #print(f"Training XGBoost: {run_name}")
+    #print(f"{'='*60}")
+    #print(f"Raw parameters: {xgb_params}")
     
-    # Clean problematic parameters
     problematic_params = [
-        'use_label_encoder', 'eval_metric', 'early_stopping_rounds',
-        'callbacks', 'xgb_model', 'verbosity', 'n_jobs'
-    ]
-    
-    xgb_params_clean = {k: v for k, v in xgb_params.items() 
-                        if k not in problematic_params}
-    
-    #fit_params = {}
-    #if 'eval_metric' in xgb_params:
-    #    fit_params['eval_metric'] = xgb_params['eval_metric']
-    
-    print(f"Cleaned parameters: {xgb_params_clean}")
-    
-    with mlflow.start_run(run_name=run_name) as run:
-        # Log ALL parameters
-        mlflow.log_params(xgb_params)
-        mlflow.log_metric("train_samples", len(X_train))
-        mlflow.log_metric("positive_class_ratio", y_train.mean())
-        
-        # Train model
-        print("Training XGBoost...")
+            'use_label_encoder',  # Deprecated in newer XGBoost
+            'eval_metric',        # Should be passed to fit(), not constructor
+            'early_stopping_rounds',  # Should be passed to fit()
+            'callbacks',          # Should be passed to fit()
+            'xgb_model',          # For continued training
+            'verbosity',          # Can cause conflicts
+            'n_jobs'              # Can cause conflicts with cross_val_score
+        ]
+
+    xgb_params_clean = {}
+    # Copy only valid constructor parameters
+    for key, value in xgb_params.items():
+        if key not in problematic_params:
+            xgb_params_clean[key] = value
+        else:
+            print(f"DEBUG: Filtering out parameter: {key} = {value}")
+    # Log what parameters we're using
+    print(f"DEBUG: Cleaned constructor parameters: {xgb_params_clean}")
+    # Separate fit parameters (for use in model.fit())
+    fit_params = {}
+    if 'eval_metric' in xgb_params:
+        print(f"DEBUG: Adding eval_metric to fit parameters: {xgb_params['eval_metric']}")
+        fit_params['eval_metric'] = xgb_params['eval_metric']
+    #if 'early_stopping_rounds' in xgb_params:
+       # print(f"DEBUG: Adding early_stopping_rounds to fit parameters: {xgb_params['early_stopping_rounds']}")
+        #fit_params['early_stopping_rounds'] = xgb_params['early_stopping_rounds']
+    try:
+        # Start MLflow run
+        run_name = f"xgb_loan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        print(f"Starting MLflow run: {run_name}")
+        #mlflow.set_experiment("loan_prediction")
+        #with mlflow.start_run(run_name=run_name):
+        print("MLflow run started")
+        # Initialize model with CLEANED constructor parameters
+        print(f"Initializing XGBClassifier with: {xgb_params_clean}")
         xgb_model = xgb.XGBClassifier(
             **xgb_params_clean,
-            use_label_encoder=False
+            use_label_encoder=False  # Always False for newer versions
         )
-        
         # Handle early stopping if needed
         if 'early_stopping_rounds' in xgb_params:
             X_train_fit, X_val, y_train_fit, y_val = train_test_split(
@@ -221,43 +233,56 @@ def train_xgboost(
             )
         else:
             xgb_model.fit(X_train, y_train)
-        
         # Quick validation score
         train_pred = xgb_model.predict(X_train)
         train_accuracy = accuracy_score(y_train, train_pred)
         train_proba = xgb_model.predict_proba(X_train)[:, 1]
         train_auc = roc_auc_score(y_train, train_proba)
-        
-        mlflow.log_metric("train_accuracy", train_accuracy)
-        mlflow.log_metric("train_auc", train_auc)
-        
+        try:
+            if mlflow.active_run():
+                print(f"Ending active run: {mlflow.active_run().info.run_id}")
+                mlflow.end_run()
+        except Exception as e:
+            print(f"Warning: Could not end active run: {e}")
+        mlflow.log_metric("train_accuracy_xgb", train_accuracy)
+        mlflow.log_metric("train_auc_xgb", train_auc)
         # Feature importance
-        feature_importance = pd.DataFrame({
-            'feature': X_train.columns,
-            'importance': xgb_model.feature_importances_
-        }).sort_values('importance', ascending=False)
-        
+        #feature_importance = pd.DataFrame({
+        #    'feature': X_train.columns,
+        #    'importance': xgb_model.feature_importances_
+        #}).sort_values('importance', ascending=False)
         # Log top 10 features
-        for idx, row in feature_importance.head(10).iterrows():
-            mlflow.log_metric(f"feature_importance_{row['feature']}", row['importance'])
-        
+        #for idx, row in feature_importance.head(10).iterrows():
+        #    mlflow.log_metric(f"feature_importance_{row['feature']}", row['importance'])
         # Log model
         mlflow.xgboost.log_model(
             xgb_model,
             artifact_path="model",
             registered_model_name="loan_xgb_model"
         )
-        
         # Add tags
-        mlflow.set_tag("model_type", "XGBoost")
-        mlflow.set_tag("task", "binary_classification")
-        mlflow.set_tag("stage", "training")
-        
-        run_id = run.info.run_id
-        print(f"✅ XGBoost trained | Run ID: {run_id}")
+        #   mlflow.set_tag("model_type", "XGBoost")
+        #   mlflow.set_tag("task", "binary_classification")
+        #   mlflow.set_tag("stage", "training")
+        #run_id = run.info.run_id
+        #print(f"✅ XGBoost trained | Run ID: {run_id}")
         print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
+        return xgb_model#, run_id
+                
+    except Exception as e:
+        print(f"❌ Error in train_evaluate_xgb: {str(e)}")
+        import traceback
+        traceback.print_exc()
         
-        return xgb_model, run_id
+        return {
+            'model': None,
+            'test_accuracy': 0,
+            'test_auc': 0,
+            'cv_scores': [],
+            'feature_importance': pd.DataFrame(),
+            'run_id': None,
+            'error': str(e)
+        }
 
 
 # ==============================================================================
@@ -266,11 +291,11 @@ def train_xgboost(
 
 def select_best_model(
     lr_model: Any,
-    lr_run_id: str,
+    #lr_run_id: str,
     rf_model: Any,
-    rf_run_id: str,
+    #rf_run_id: str,
     xgb_model: Any,
-    xgb_run_id: str,
+    #xgb_run_id: str,
     X_train: pd.DataFrame,
     y_train: pd.Series,
     selection_metric: str = "roc_auc"
@@ -296,15 +321,15 @@ def select_best_model(
     print(f"Selection metric: {selection_metric}\n")
     
     models = {
-        'Logistic Regression': (lr_model, lr_run_id),
-        'Random Forest': (rf_model, rf_run_id),
-        'XGBoost': (xgb_model, xgb_run_id)
+        'Logistic Regression': lr_model,
+        'Random Forest': rf_model, 
+        'XGBoost': xgb_model
     }
     
     scores = {}
     
     # Evaluate each model
-    for name, (model, run_id) in models.items():
+    for name, (model) in models.items():
         pred = model.predict(X_train)
         proba = model.predict_proba(X_train)[:, 1]
         
@@ -314,7 +339,7 @@ def select_best_model(
         scores[name] = {
             'accuracy': accuracy,
             'roc_auc': auc,
-            'run_id': run_id
+            #'run_id': run_id
         }
         
         print(f"{name:25s} | Accuracy: {accuracy:.4f} | AUC: {auc:.4f}")
@@ -325,39 +350,39 @@ def select_best_model(
     else:  # roc_auc
         best_name = max(scores, key=lambda x: scores[x]['roc_auc'])
     
-    best_model = models[best_name][0]
-    best_run_id = scores[best_name]['run_id']
+    best_model = models[best_name]
+    #best_run_id = scores[best_name]['run_id']
     best_score = scores[best_name][selection_metric]
     
     print(f"\n{'='*60}")
     print(f"🏆 BEST MODEL: {best_name}")
     print(f"{'='*60}")
     print(f"   {selection_metric}: {best_score:.4f}")
-    print(f"   MLflow Run ID: {best_run_id}\n")
+    #print(f"   MLflow Run ID: {best_run_id}\n")
     
     # Log comparison to MLflow
-    try:
-        if mlflow.active_run():
-            mlflow.end_run()
-    except:
-        pass
+    #try:
+    #    if mlflow.active_run():
+    #        mlflow.end_run()
+    #except:
+    #    pass
     
-    with mlflow.start_run(run_name=f"model_selection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-        mlflow.log_param("selection_metric", selection_metric)
-        mlflow.log_param("best_model", best_name)
-        mlflow.log_param("best_run_id", best_run_id)
+    #with mlflow.start_run(run_name=f"model_selection_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+    mlflow.log_param("selection_metric", selection_metric)
+    mlflow.log_param("best_model", best_name)
+    #mlflow.log_param("best_run_id", best_run_id)
+    
+    for name, score_dict in scores.items():
+        mlflow.log_metric(f"{name}_accuracy", score_dict['accuracy'])
+        mlflow.log_metric(f"{name}_auc", score_dict['roc_auc'])
         
-        for name, score_dict in scores.items():
-            mlflow.log_metric(f"{name}_accuracy", score_dict['accuracy'])
-            mlflow.log_metric(f"{name}_auc", score_dict['roc_auc'])
-        
-        mlflow.set_tag("stage", "model_selection")
-        mlflow.set_tag("best_model", best_name)
+        #mlflow.set_tag("stage", "model_selection")
+        #mlflow.set_tag("best_model", best_name)
     
     # Prepare output scores
     all_scores = {name: score_dict[selection_metric] for name, score_dict in scores.items()}
     
-    return best_model, best_name, best_run_id, all_scores
+    return best_model, best_name, all_scores
 
 
 # ==============================================================================
@@ -367,7 +392,7 @@ def select_best_model(
 def cross_validate_model(
     best_model: Any,
     best_model_name: str,
-    best_run_id: str,
+    #best_run_id: str,
     X_train: pd.DataFrame,
     y_train: pd.Series,
     cv_folds: int = 10
@@ -410,28 +435,28 @@ def cross_validate_model(
     print(f"Mean CV AUC: {cv_mean:.4f} (± {cv_std:.4f})")
     
     # Log to MLflow
-    try:
-        if mlflow.active_run():
-            mlflow.end_run()
-    except:
-        pass
+    #try:
+    #    if mlflow.active_run():
+    #        mlflow.end_run()
+    #except:
+    #    pass
+    #
+    #with mlflow.start_run(run_name=f"cv_{best_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+    mlflow.log_param("best_model_name", best_model_name)
+    #mlflow.log_param("parent_run_id", best_run_id)
+    #mlflow.log_param("cv_folds", cv_folds)
     
-    with mlflow.start_run(run_name=f"cv_{best_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-        mlflow.log_param("model_name", best_model_name)
-        mlflow.log_param("parent_run_id", best_run_id)
-        mlflow.log_param("cv_folds", cv_folds)
-        
-        mlflow.log_metric("mean_cv_auc", cv_mean)
-        mlflow.log_metric("std_cv_auc", cv_std)
-        mlflow.log_metric("min_cv_auc", cv_scores.min())
-        mlflow.log_metric("max_cv_auc", cv_scores.max())
+    mlflow.log_metric("mean_cv_auc_for_best_model", cv_mean)
+    mlflow.log_metric("std_cv_auc_for_best_model", cv_std)
+    mlflow.log_metric("min_cv_auc_for_best_model", cv_scores.min())
+    mlflow.log_metric("max_cv_auc_for_best_model", cv_scores.max())
         
         # Log individual fold scores
-        for i, score in enumerate(cv_scores):
-            mlflow.log_metric(f"cv_fold_{i+1}_auc", score)
-        
-        mlflow.set_tag("stage", "cross_validation")
-        mlflow.set_tag("model_type", best_model_name)
+    #for i, score in enumerate(cv_scores):
+    #    mlflow.log_metric(f"cv_fold_{i+1}_auc", score)
+    #
+    #mlflow.set_tag("stage", "cross_validation")
+    #mlflow.set_tag("model_type", best_model_name)
     
     print(f"✅ Cross-validation completed\n")
     
@@ -445,7 +470,7 @@ def cross_validate_model(
 def test_final_model(
     best_model: Any,
     best_model_name: str,
-    best_run_id: str,
+    #best_run_id: str,
     X_test: pd.DataFrame,
     y_test: pd.Series,
     X_train: pd.DataFrame  # For feature importance
@@ -491,33 +516,33 @@ def test_final_model(
             'importance': best_model.feature_importances_
         }).sort_values('importance', ascending=False)
         
-        print(f"\nTop 10 Most Important Features:")
-        print(feature_importance.head(10).to_string(index=False))
+        #print(f"\nTop 10 Most Important Features:")
+        #print(feature_importance.head(10).to_string(index=False))
     
     # Log to MLflow
-    try:
-        if mlflow.active_run():
-            mlflow.end_run()
-    except:
-        pass
+    #try:
+    #    if mlflow.active_run():
+    #        mlflow.end_run()
+    #except:
+    #    pass
+    #
+    #with mlflow.start_run(run_name=f"test_{best_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+    #mlflow.log_param("model_name", best_model_name)
+    #mlflow.log_param("parent_run_id", best_run_id)
+    mlflow.log_metric("test_samples", len(X_test))
     
-    with mlflow.start_run(run_name=f"test_{best_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-        mlflow.log_param("model_name", best_model_name)
-        mlflow.log_param("parent_run_id", best_run_id)
-        mlflow.log_metric("test_samples", len(X_test))
-        
-        # Log test metrics
-        mlflow.log_metric("test_accuracy", test_accuracy)
-        mlflow.log_metric("test_auc", test_auc)
-        
-        # Log feature importance if available
-        if feature_importance is not None:
-            for idx, row in feature_importance.head(10).iterrows():
-                mlflow.log_metric(f"test_feature_importance_{row['feature']}", row['importance'])
-        
-        mlflow.set_tag("stage", "testing")
-        mlflow.set_tag("model_type", best_model_name)
-        mlflow.set_tag("status", "completed")
+    # Log test metrics
+    mlflow.log_metric("test_accuracy_final_model", test_accuracy)
+    mlflow.log_metric("test_auc_final_model", test_auc)
+    
+    # Log feature importance if available
+    #if feature_importance is not None:
+    #    for idx, row in feature_importance.head(10).iterrows():
+    #        mlflow.log_metric(f"test_feature_importance_{row['feature']}", row['importance'])
+    #
+    #mlflow.set_tag("stage", "testing")
+    #mlflow.set_tag("model_type", best_model_name)
+    #mlflow.set_tag("status", "completed")
     
     print(f"\n✅ Final testing completed\n")
     
@@ -525,7 +550,7 @@ def test_final_model(
     results = {
         'model': best_model,
         'model_name': best_model_name,
-        'run_id': best_run_id,
+        #'run_id': best_run_id,
         'test_accuracy': test_accuracy,
         'test_auc': test_auc,
         'predictions': y_pred,
@@ -536,90 +561,3 @@ def test_final_model(
     
     return results , y_pred
 
-
-# ==============================================================================
-# HELPER: Combined Training Function (if you want single node)
-# ==============================================================================
-
-#def train_all_models(
-#    X_train: pd.DataFrame,
-#    y_train: pd.Series,
-#    lr_params: Dict[str, Any],
-#    rf_params: Dict[str, Any],
-#    xgb_params: Dict[str, Any]
-#) -> Tuple[Any, str, Any, str, Any, str]:
-#    """
-#    Train all three models in one node (alternative approach)
-#    
-#    Returns:
-#        lr_model, lr_run_id, rf_model, rf_run_id, xgb_model, xgb_run_id
-#    """
-#    print(f"\n{'='*60}")
-#    print("TRAINING ALL MODELS")
-#    print(f"{'='*60}\n")
-#    
-#    # Train each model
-#    lr_model, lr_run_id = train_logistic_regression(X_train, y_train, lr_params)
-#    rf_model, rf_run_id = train_random_forest(X_train, y_train, rf_params)
-#    xgb_model, xgb_run_id = train_xgboost(X_train, y_train, xgb_params)
-#    
-#    print(f"\n{'='*60}")
-#    print("ALL MODELS TRAINED SUCCESSFULLY")
-#    print(f"{'='*60}\n")
-#    
-#    return lr_model, lr_run_id, rf_model, rf_run_id, xgb_model, xgb_run_id
-        
-        
-def plot_roc_curve(y_test, y_pred_proba):
-    """
-    Generate ROC-AUC curve plot
-    
-    Args:
-        y_test: True labels
-        y_pred_proba: Predicted probabilities for positive class
-    
-    Returns:
-        matplotlib.figure.Figure: ROC curve figure
-    """
-    # Calculate ROC curve
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
-    roc_auc = auc(fpr, tpr)
-    
-    # Create figure
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Plot ROC curve
-    ax.plot(fpr, tpr, color='darkorange', lw=2, 
-            label=f'ROC curve (AUC = {roc_auc:.4f})')
-    
-    # Plot diagonal reference line
-    ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', 
-            label='Random Classifier (AUC = 0.5)')
-    
-    # Styling
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    ax.set_xlabel('False Positive Rate', fontsize=12)
-    ax.set_ylabel('True Positive Rate', fontsize=12)
-    ax.set_title('Receiver Operating Characteristic (ROC) Curve', fontsize=14, fontweight='bold')
-    ax.legend(loc="lower right", fontsize=10)
-    ax.grid(True, alpha=0.3)
-    
-    # Add text box with additional info
-    textstr = f'AUC Score: {roc_auc:.4f}\nSamples: {len(y_test)}'
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    ax.text(0.6, 0.1, textstr, transform=ax.transAxes, fontsize=10,
-            verticalalignment='top', bbox=props)
-    
-    plt.tight_layout()
-    
-    # Log to MLflow if active run exists
-    #try:
-    #    if mlflow.active_run():
-    #        mlflow.log_figure(fig, "roc_curve.png")
-    #        mlflow.log_metric("roc_auc_from_curve", roc_auc)
-    #        print(f"✅ ROC curve logged to MLflow (AUC: {roc_auc:.4f})")
-    #except Exception as e:
-    #    print(f"Warning: Could not log to MLflow: {e}")
-    
-    return fig

@@ -10,13 +10,16 @@ def create_pipeline(**kwargs):
                 func=remove_duplicates,
                 inputs=["raw_data"],
                 outputs="data_without_duplicates",
-                name="removing_duplicates"
+                name="removing_duplicates",
+                tags="data_engineering",
+            
             ),
             node(
                 func=filter_data, 
                 inputs=["data_without_duplicates"],
                 outputs="filtered_data", 
-                name="filtering_data"
+                name="filtering_data",
+                tags="data_engineering",
                 ),
             
             
@@ -25,24 +28,28 @@ def create_pipeline(**kwargs):
                 inputs="filtered_data",
                 outputs=["features", "target"],
                 name="splitting_feature_target",
+                tags="data_engineering",
             ),
             node(
                 func=train_test_df_split,
                 inputs=["features", "target", "params:test_size", "params:random_state"],
                 outputs=["X_train", "X_test", "y_train", "y_test" , "loan_amt_train", "loan_amt_test"],
                 name="split_data_node",
+                tags="data_engineering",
             ),
             node(
                 func=one_hot_encode,
                 inputs=["X_train","X_test"],
                 outputs=["X_train_encoded","X_test_encoded"],
                 name="encoding_node",
+                tags="data_engineering",
             ),
             node(
                 func=scale_features,
                 inputs=["X_train_encoded", "X_test_encoded", "params:stand_col"],
                 outputs=["X_train_scaled", "X_test_scaled"],
                 name="scale_features_node",
+                tags="data_engineering",
             ),
 
 

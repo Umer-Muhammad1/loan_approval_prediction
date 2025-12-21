@@ -8,6 +8,14 @@ import pandas as pd
 from typing import Optional
 import pandas as pd
 from typing import Optional
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import pandas as pd
+from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, FancyBboxPatch, Circle
+from matplotlib.gridspec import GridSpec
+import matplotlib.patches as mpatches
 
 
 def generate_feature_importance(
@@ -377,14 +385,7 @@ def calculate_business_impact(y_test, y_pred,  loan_amt_test):
     
     return pd.DataFrame([metrics])
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-import pandas as pd
-from matplotlib.patches import Rectangle
-from matplotlib.patches import Rectangle, FancyBboxPatch, Circle
-from matplotlib.gridspec import GridSpec
-import matplotlib.patches as mpatches
+
 
 def visualize_business_metrics(enhanced_business_report):
     """

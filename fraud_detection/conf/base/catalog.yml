@@ -129,7 +129,22 @@ kde_histogram:
         format: png
         dpi: 300
 
-
+feature_importance_plot:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: matplotlib.MatplotlibDataset
+      filepath: data/temp/fraud_detection/feature_importance_plot.png
+      save_args:
+        format: png
+        dpi: 300
+roc_auc_plot:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: matplotlib.MatplotlibDataset
+      filepath: data/temp/fraud_detection/roc_auc_plot.png
+      save_args:
+        format: png
+        dpi: 300
 
 filtered_data:
   type: pandas.CSVDataset
@@ -241,47 +256,50 @@ roc_curve_plot:
       
 
 lr_model:
-  type: pickle.PickleDataset 
-  filepath: data/06_models/lr_model.pkl
-  backend: pickle
-  versioned: true
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pickle.PickleDataset 
+    filepath: data/07_model_output/lr_model.pkl
+    #backend: pickle
+    #versioned: true
 
 rf_model:
-  type: pickle.PickleDataset 
-  filepath: data/06_models/rf_model.pkl
-  backend: pickle
-  versioned: true
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pickle.PickleDataset 
+    filepath: data/07_model_output/rf_model.pkl
+    #backend: pickle
+    #versioned: true
 
+#xgb_model:
+#  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#  dataset:
+#    type: pickle.PickleDataset 
+#    filepath: data/06_models/xgb_model.pkl
+#    #backend: pickle
+#    #versioned: true
 xgb_model:
-  type: pickle.PickleDataset 
-  filepath: data/06_models/xgb_model.pkl
-  backend: pickle
-  versioned: true
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pickle.PickleDataset  # or any valid kedro DataSet
+      filepath: data/07_model_output/xgb_model.pkl
+
+
 
 best_model:
-  type: pickle.PickleDataset 
-  filepath: data/06_models/best_model.pkl
-  backend: pickle
-  versioned: true
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pickle.PickleDataset 
+    filepath: data/07_model_output/best_model.pkl
+    #backend: pickle
+    #versioned: true
 
 # ==================== MODEL METADATA ====================
-lr_run_id:
-  type: text.TextDataset
-  filepath: data/08_reporting/lr_run_id.txt
 
-rf_run_id:
-  type: text.TextDataset
-  filepath: data/08_reporting/rf_run_id.txt
 
-xgb_run_id:
-  type: text.TextDataset
-  filepath: data/08_reporting/xgb_run_id.txt
-
-best_run_id:
-  type: text.TextDataset
-  filepath: data/08_reporting/best_run_id.txt
 
 best_model_name:
+
   type: text.TextDataset
   filepath: data/08_reporting/best_model_name.txt
 
