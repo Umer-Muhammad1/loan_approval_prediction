@@ -28,7 +28,7 @@ notebooks/**
 
 # ignore file based logs
 *.log
-
+...conda
 ##########################
 # Common files
 
