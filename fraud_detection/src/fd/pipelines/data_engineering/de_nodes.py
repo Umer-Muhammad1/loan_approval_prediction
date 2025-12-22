@@ -212,46 +212,92 @@ def train_test_df_split(features: pd.DataFrame, target: pd.Series, test_size: fl
     return X_train, X_test, y_train, y_test , loan_amt_train, loan_amt_test
 
 
+#def one_hot_encode(X_train: pd.DataFrame, X_test: pd.DataFrame):
+#    
+#    # Concatenate X_train and X_test
+#    combined_data = pd.concat([X_train, X_test], axis=0, ignore_index=True)
+#    cat_cols= combined_data.select_dtypes(['object']).columns
+#    # One-hot encode the categorical columns
+#    onehot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+#    encoded_data = onehot_encoder.fit_transform(combined_data[cat_cols])
+#    
+#    # Convert encoded data to DataFrame
+#    encoded_columns = onehot_encoder.get_feature_names_out(cat_cols)
+#    encoded_df = pd.DataFrame(encoded_data, columns=encoded_columns)
+#
+#    # Drop the original categorical columns and add the encoded ones
+#    combined_data_encoded = combined_data.drop(columns=cat_cols).join(encoded_df)
+#    
+#    # Split the data back into X_train and X_test
+#    X_train_encoded = combined_data_encoded.iloc[:len(X_train), :]
+#    X_test_encoded = combined_data_encoded.iloc[len(X_train):, :]
+#
+#    return X_train_encoded, X_test_encoded
+#
+#
+#
+#
+#def scale_features(X_train: pd.DataFrame, X_test: pd.DataFrame, stand_col: list):
+#    
+#    # Initialize the scaler
+#    scaler = StandardScaler()
+#
+#    # Fit and transform the training data
+#    X_train_scaled = scaler.fit_transform(X_train[stand_col])
+#    X_test_scaled = scaler.transform(X_test[stand_col])
+#
+#    # Convert back to DataFrame
+#    X_train_scaled_df = pd.DataFrame(X_train_scaled, columns=stand_col, index=X_train.index)
+#    X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=stand_col, index=X_test.index)
+#
+#    # Replace original columns with scaled columns
+#    X_train_final = X_train.drop(columns=stand_col).join(X_train_scaled_df)
+#    X_test_final = X_test.drop(columns=stand_col).join(X_test_scaled_df)
+#
+#    return X_train_final, X_test_final
+
 def one_hot_encode(X_train: pd.DataFrame, X_test: pd.DataFrame):
+    # 1. Identify categorical columns
+    cat_cols = X_train.select_dtypes(['object', 'category']).columns
     
-    # Concatenate X_train and X_test
-    combined_data = pd.concat([X_train, X_test], axis=0, ignore_index=True)
-    cat_cols= combined_data.select_dtypes(['object']).columns
-    # One-hot encode the categorical columns
-    onehot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-    encoded_data = onehot_encoder.fit_transform(combined_data[cat_cols])
+    # 2. Initialize and Fit the encoder ONLY on X_train
+    # 'handle_unknown="ignore"' is CRITICAL for FastAPI safety
+    encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    encoder.fit(X_train[cat_cols])
     
-    # Convert encoded data to DataFrame
-    encoded_columns = onehot_encoder.get_feature_names_out(cat_cols)
-    encoded_df = pd.DataFrame(encoded_data, columns=encoded_columns)
+    # 3. Helper function to transform DataFrames
+    def transform_data(df, enc, cols):
+        encoded_array = enc.transform(df[cols])
+        encoded_cols = enc.get_feature_names_out(cols)
+        encoded_df = pd.DataFrame(encoded_array, columns=encoded_cols, index=df.index)
+        return df.drop(columns=cols).join(encoded_df)
 
-    # Drop the original categorical columns and add the encoded ones
-    combined_data_encoded = combined_data.drop(columns=cat_cols).join(encoded_df)
-    
-    # Split the data back into X_train and X_test
-    X_train_encoded = combined_data_encoded.iloc[:len(X_train), :]
-    X_test_encoded = combined_data_encoded.iloc[len(X_train):, :]
+    X_train_encoded = transform_data(X_train, encoder, cat_cols)
+    X_test_encoded = transform_data(X_test, encoder, cat_cols)
 
-    return X_train_encoded, X_test_encoded
-
-
-
+    # Return the encoder so Kedro can save it for the API
+    return X_train_encoded, X_test_encoded, encoder
 
 def scale_features(X_train: pd.DataFrame, X_test: pd.DataFrame, stand_col: list):
-    
-    # Initialize the scaler
     scaler = StandardScaler()
+    
+    # Fit ONLY on X_train
+    scaler.fit(X_train[stand_col])
 
-    # Fit and transform the training data
-    X_train_scaled = scaler.fit_transform(X_train[stand_col])
-    X_test_scaled = scaler.transform(X_test[stand_col])
+    # Transform both sets
+    X_train_scaled = pd.DataFrame(
+        scaler.transform(X_train[stand_col]), 
+        columns=stand_col, 
+        index=X_train.index
+    )
+    X_test_scaled = pd.DataFrame(
+        scaler.transform(X_test[stand_col]), 
+        columns=stand_col, 
+        index=X_test.index
+    )
 
-    # Convert back to DataFrame
-    X_train_scaled_df = pd.DataFrame(X_train_scaled, columns=stand_col, index=X_train.index)
-    X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=stand_col, index=X_test.index)
+    X_train_final = X_train.drop(columns=stand_col).join(X_train_scaled)
+    X_test_final = X_test.drop(columns=stand_col).join(X_test_scaled)
 
-    # Replace original columns with scaled columns
-    X_train_final = X_train.drop(columns=stand_col).join(X_train_scaled_df)
-    X_test_final = X_test.drop(columns=stand_col).join(X_test_scaled_df)
-
-    return X_train_final, X_test_final
+    # Return the scaler for the API
+    return X_train_final, X_test_final, scaler

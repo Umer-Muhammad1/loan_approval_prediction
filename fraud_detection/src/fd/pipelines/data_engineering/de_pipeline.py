@@ -55,14 +55,14 @@ def create_pipeline(**kwargs):
             node(
                 func=one_hot_encode,
                 inputs=["X_train","X_test"],
-                outputs=["X_train_encoded","X_test_encoded"],
+                outputs=["X_train_encoded","X_test_encoded" , "fitted_encoder"],
                 name="encoding_node",
                 tags="data_engineering",
             ),
             node(
                 func=scale_features,
                 inputs=["X_train_encoded", "X_test_encoded", "params:stand_col"],
-                outputs=["X_train_scaled", "X_test_scaled"],
+                outputs=["X_train_scaled", "X_test_scaled", "fitted_scaler"],
                 name="scale_features_node",
                 tags="data_engineering",
             ),

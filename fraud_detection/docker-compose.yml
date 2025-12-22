@@ -1,16 +1,45 @@
 services:
-  kedro:
-    image: fd1
+  # 1. MLflow Tracking Server
+  mlflow:
+    build: .
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/app/mlruns
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /app/mlruns
+
+  # 2. FastAPI Prediction Service
+  api:
+    build: .
+    container_name: loan_api_service
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+    # Runs your FastAPI server
+    command: uvicorn app.main:app --reload
+
+  # 3. Kedro Training Service (Optional: only runs when you want to retrain)
+  kedro_train:
+    build: .
     container_name: fraud_detection_kedro
-    working_dir: /app
-    user: root
     volumes:
       - .:/app
       - ./mlruns:/app/mlruns
-      - ./data:/app/data
     environment:
-      KEDRO_ENV: docker
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      KEDRO_ENV: docker  # Changed from KEDRO_ENV: docker to a standard map entry
+    depends_on:
+      - mlflow
     command: ["kedro", "run"]
+    profiles: ["train"] # Only runs if you call 'docker-compose run kedro_train'
+
+
 
 # docker compose build --no-cache
 # docker compose up

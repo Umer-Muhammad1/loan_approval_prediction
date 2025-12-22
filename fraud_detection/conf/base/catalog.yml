@@ -346,3 +346,11 @@ predictions_proba:
   filepath: data/07_model_output/predictions_proba.csv
   save_args:
     index: false
+
+fitted_scaler:
+  type: pickle.PickleDataset
+  filepath: data/06_models/scaler.pkl
+
+fitted_encoder:
+  type: pickle.PickleDataset
+  filepath: data/06_models/encoder.pkl
