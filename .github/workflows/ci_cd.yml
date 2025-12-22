@@ -3,6 +3,8 @@ name: CI_CD Pipeline
 on:
   push:
     branches: [ main, develop ]
+    tags: 
+      - 'v*' # This triggers the workflow for any tag starting with 'v' (e.g., v1.0.1)
   pull_request:
     branches: [ main, develop ]
 
@@ -87,11 +89,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Extract Tag Name
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: ./fraud_detection
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/loan-prediction:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/loan-prediction:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/kedro_pipelines:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/kedro_pipelines:${{ steps.vars.outputs.tag }}
