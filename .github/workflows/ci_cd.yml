@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI_CD Pipeline
 
 on:
   push:
@@ -69,21 +69,29 @@ jobs:
           # Replace this with your actual validation script
           python -c "print('Data validation passed')"
 
-  # 3. Containerization
-  build-docker:
+# 3. Build and Push to DockerHub
+  build-and-push:
     runs-on: ubuntu-latest
     needs: [qa-testing, data-validation]
-    defaults:
-      run:
-        working-directory: ./fraud_detection
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: |
-          # Now it looks for 'Dockerfile' inside ./fraud_detection automatically
-          docker build -t loan-prediction:${{ github.sha }} .
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./fraud_detection
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/loan-prediction:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/loan-prediction:${{ github.sha }}
