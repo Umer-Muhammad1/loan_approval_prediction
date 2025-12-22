@@ -23,16 +23,38 @@ def valid_payload():
     }
 
 # We mock the model so we don't need a real MLflow server running during tests
+
+
 @patch("app.main.model")
-def test_predict_success(mock_model, valid_payload):
-    # Setup the mock to return a prediction of [1]
+@patch("app.main.scaler")
+@patch("app.main.encoder")
+def test_predict_success(mock_encoder, mock_scaler, mock_model, valid_payload):
+    # 1. Setup Mock Encoder (must return an array with correct shape)
+    mock_encoder.transform.return_value = MagicMock() # Or a dummy numpy array
+    mock_encoder.get_feature_names_out.return_value = [
+        'person_home_ownership_MORTGAGE', 'person_home_ownership_OTHER', 
+        'person_home_ownership_OWN', 'person_home_ownership_RENT',
+        'loan_intent_DEBTCONSOLIDATION', 'loan_intent_EDUCATION', 
+        'loan_intent_HOMEIMPROVEMENT', 'loan_intent_MEDICAL', 
+        'loan_intent_PERSONAL', 'loan_intent_VENTURE', 
+        'loan_grade_A', 'loan_grade_B', 'loan_grade_C', 'loan_grade_D', 
+        'loan_grade_E', 'loan_grade_F', 'loan_grade_G', 
+        'cb_person_default_on_file_N', 'cb_person_default_on_file_Y'
+    ]
+
+    # 2. Setup Mock Scaler
+    mock_scaler.transform.return_value = [[0] * 7] # Dummy scaled values
+
+    # 3. Setup Mock Model
     mock_model.predict.return_value = [1]
-    
+
+    # Execute
     response = client.post("/predict", json=valid_payload)
-    
+
+    # Assert
     assert response.status_code == 200
-    assert response.json()["status"] == "Approved"
     assert response.json()["prediction"] == 1
+    assert response.json()["status"] == "Approved"
 
 def test_predict_invalid_data(valid_payload):
     # Modify payload to fail Pydantic validation (age < 18)
