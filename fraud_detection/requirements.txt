@@ -1,13 +1,10 @@
 kedro == 1.1.1
-
 kedro-viz==12.2.0
 mlflow == 3.7.0
 kedro_mlflow == 2.0.0
 kedro-datasets == 9
 seaborn == 0.13.2
 xgboost == 3.1.2
-
-
 pytest == 9.0.2      
 pytest-cov==7.0.0   
 httpx == 0.28.1                                                             
