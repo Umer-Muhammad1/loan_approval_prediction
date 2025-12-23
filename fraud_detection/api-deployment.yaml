@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: api
+    spec:
+      containers:
+        - args:
+            - uvicorn
+            - app.main:app
+            - --reload
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: http://mlflow:5000
+          image: mumerarif/kedro_pipelines:fraud_detection-api
+          name: loan-api-service
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          #volumeMounts:
+          #  - mountPath: /app
+          #    name: api-cm0
+      restartPolicy: Always
+      #volumes:
+      #  - configMap:
+      #      name: api-cm0
+      #    name: api-cm0
