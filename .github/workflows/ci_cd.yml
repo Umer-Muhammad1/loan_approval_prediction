@@ -108,3 +108,12 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy to Render
+    needs: [build-and-push] # Replace this with the name of your push job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Deploy Hook
+        run: |
+          curl -f ${{ secrets.RENDER_DEPLOY_HOOK }}
