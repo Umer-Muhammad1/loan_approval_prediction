@@ -40,3 +40,10 @@ spec:
             - containerPort: 5000
               protocol: TCP
       restartPolicy: Always
+
+
+# create a k8 cluster on docker desktop, run 
+# kubectl apply -f api-deployment.yaml
+# kubectl apply -f mlflow-deployment.yaml
+# kubectl get pods
+# kubectl logs (api-79dc8bff77-dqdqz) <- pod name from docker desktop
