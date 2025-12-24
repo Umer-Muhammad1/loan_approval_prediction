@@ -32,8 +32,14 @@ spec:
             - "5000"
             - --backend-store-uri
             - sqlite:///mlflow.db
+            # 1. Tell the CLIENT to send files to the proxy URI
             - --default-artifact-root
+            - mlflow-artifacts:/
+            # 2. Tell the SERVER where to actually save those files inside the pod
+            - --artifacts-destination
             - /app/mlruns
+            # 3. Enable the proxying logic
+            - --serve-artifacts
           image : mumerarif/kedro_pipelines:fraud_detection-mlflow
           name: mlflow-server
           ports:
