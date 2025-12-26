@@ -1,45 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert
-    kompose.version: 1.37.0 (fb0539e64)
-  labels:
-    io.kompose.service: api
-  name: api
+  name: loan-api-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: api
-  strategy:
-    type: Recreate
+      app: loan-api
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert
-        kompose.version: 1.37.0 (fb0539e64)
       labels:
-        io.kompose.service: api
+        app: loan-api
     spec:
       containers:
-        - args:
-            - uvicorn
-            - app.main:app
-            - --reload
-          env:
-            - name: MLFLOW_TRACKING_URI
-              value: http://mlflow:5000
-          image: mumerarif/kedro_pipelines:fraud_detection-api
-          name: loan-api-service
-          ports:
-            - containerPort: 8000
-              protocol: TCP
-          #volumeMounts:
-          #  - mountPath: /app
-          #    name: api-cm0
-      restartPolicy: Always
-      #volumes:
-      #  - configMap:
-      #      name: api-cm0
-      #    name: api-cm0
+      - name: loan-api
+        image: mumerarif/kedro_pipelines:fraud_detection_api_v2 # <--- Use the new tag
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        # This tells the API how to find MLflow inside the cluster
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-service:5000"
+        - name: MODEL_NAME
+          value: "loan_xgb_model"
+        - name: MODEL_ALIAS
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-api-service
+spec:
+  type: ClusterIP
+  selector:
+    app: loan-api
+  ports:
+  - port: 80
+    targetPort: 8000

@@ -1,0 +1,114 @@
+# 1. MLFLOW DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow-server
+          image: mumerarif/kedro_pipelines:fraud_detection-mlflow
+          args:
+            - mlflow
+            - server
+            - --host
+            - 0.0.0.0
+            - --port
+            - "5000"
+            - --backend-store-uri
+            - sqlite:///mlflow-data/mlflow.db
+            - --default-artifact-root
+            - mlflow-artifacts:/
+            - --artifacts-destination
+            - /app/mlruns
+            - --serve-artifacts
+            - --allowed-hosts
+            - "*"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: mlflow-storage
+              mountPath: /mlflow-data
+      volumes:
+        - name: mlflow-storage
+          persistentVolumeClaim:
+            claimName: mlflow-pvc
+---
+# 2. MLFLOW SERVICE
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-service
+spec:
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    app: mlflow
+  type: ClusterIP
+---
+# 3. LOAN API DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loan-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loan-api
+  template:
+    metadata:
+      labels:
+        app: loan-api
+    spec:
+      containers:
+      - name: loan-api
+        image: mumerarif/kedro_pipelines:fraud_detection_api_v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-service:5000"
+        - name: MODEL_NAME
+          value: "loan_xgb_model"
+        - name: MODEL_ALIAS
+          value: "production"
+---
+# 4. LOAN API SERVICE (Exposed to Internet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: loan-api-service
+spec:
+  type: LoadBalancer 
+  selector:
+    app: loan-api
+  ports:
+  - port: 80
+    targetPort: 8000
+
+
+# kubectl apply -f pvc.yaml
+# kubectl apply -f deployment.yaml
+# kubectl get pods
+# kubectl get service loan-api-service
+# kubectl describe pod loan-api-deployment-577f75c74b-6hdkp (for inspection of not running pod)
+# kubectl get svc loan-api-service
+# kubectl port-forward svc/loan-api-service 8080:80
+# kubectl port-forward svc/mlflow-service 5000:5000
+# kubectl delete deployment deployment_name
+# kubectl delete service service_name
+# kubectl delete pod pod_name
+# kubectl logs -l app=loan-api -f  #to see all the logs

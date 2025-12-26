@@ -348,9 +348,13 @@ predictions_proba:
     index: false
 
 fitted_scaler:
-  type: pickle.PickleDataset
-  filepath: data/06_models/scaler.pkl
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pickle.PickleDataset
+    filepath: data/06_models/scaler.pkl
 
 fitted_encoder:
-  type: pickle.PickleDataset
-  filepath: data/06_models/encoder.pkl
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pickle.PickleDataset
+    filepath: data/06_models/encoder.pkl

@@ -1,9 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    kompose.cmd: kompose convert
-    kompose.version: 1.37.0 (fb0539e64)
   labels:
     io.kompose.service: mlflow
   name: mlflow
@@ -16,9 +13,6 @@ spec:
     type: Recreate
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert
-        kompose.version: 1.37.0 (fb0539e64)
       labels:
         io.kompose.service: mlflow
     spec:
@@ -32,24 +26,31 @@ spec:
             - "5000"
             - --backend-store-uri
             - sqlite:///mlflow.db
-            # 1. Tell the CLIENT to send files to the proxy URI
             - --default-artifact-root
             - mlflow-artifacts:/
-            # 2. Tell the SERVER where to actually save those files inside the pod
             - --artifacts-destination
             - /app/mlruns
-            # 3. Enable the proxying logic
             - --serve-artifacts
-          image : mumerarif/kedro_pipelines:fraud_detection-mlflow
+            - --allowed-hosts
+            - "*"
+          image: mumerarif/kedro_pipelines:fraud_detection-mlflow
           name: mlflow-server
           ports:
             - containerPort: 5000
               protocol: TCP
       restartPolicy: Always
-
-
-# create a k8 cluster on docker desktop, run 
-# kubectl apply -f api-deployment.yaml
-# kubectl apply -f mlflow-deployment.yaml
-# kubectl get pods
-# kubectl logs (api-79dc8bff77-dqdqz) <- pod name from docker desktop
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: mlflow
+  name: mlflow-service
+spec:
+  ports:
+    - name: "5000"
+      port: 5000
+      targetPort: 5000
+  selector:
+    io.kompose.service: mlflow
+  type: ClusterIP
