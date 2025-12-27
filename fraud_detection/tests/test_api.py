@@ -53,8 +53,10 @@ def test_predict_success(mock_artifacts):
     
     assert response.status_code == 200
     assert response.json()["status"] == "Approved"
-    assert "model_version" in response.json()
+    # Change "model_version" to "model_alias"
+    assert "model_alias" in response.json()
 
+    
 def test_health_check_ready(mock_artifacts):
     # This tests if the health endpoint correctly reports 'healthy'
     response = client.get("/health")
