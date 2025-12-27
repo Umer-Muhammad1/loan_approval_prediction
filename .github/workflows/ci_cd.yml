@@ -2,7 +2,7 @@ name: CI_CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, k8 ]
     tags: 
       - 'v*' # This triggers the workflow for any tag starting with 'v' (e.g., v1.0.1)
   pull_request:
@@ -109,11 +109,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  deploy:
-    name: Deploy to Render
-    needs: [build-and-push] # Replace this with the name of your push job
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Deploy Hook
-        run: |
-          curl -f ${{ secrets.RENDER_DEPLOY_HOOK }}
+ # deploy:
+ #   name: Deploy to Render
+ #   needs: [build-and-push] # Replace this with the name of your push job
+ #   runs-on: ubuntu-latest
+ #   steps:
+ #     - name: Trigger Deploy Hook
+ #       run: |
+ #         curl -f ${{ secrets.RENDER_DEPLOY_HOOK }}
