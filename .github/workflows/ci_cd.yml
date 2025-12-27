@@ -2,7 +2,7 @@ name: CI_CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, k8]
     tags: 
       - 'v*' # This triggers the workflow for any tag starting with 'v' (e.g., v1.0.1)
   pull_request:
