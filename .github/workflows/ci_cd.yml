@@ -86,7 +86,7 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/kedro_pipelines
           tags: |
             # Tag with "latest" on every push to main
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/k8' }}
             # Tag with the Git Tag (v1.0.0) if it exists
             type=ref,event=tag
             # Tag with the SHA for internal tracking
