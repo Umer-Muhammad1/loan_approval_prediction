@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class LoanApplication(BaseModel):
     person_age: int = Field(..., gt=18, lt=100)
@@ -13,9 +13,9 @@ class LoanApplication(BaseModel):
     cb_person_default_on_file: str
     cb_person_cred_hist_length: int
 
-    class Config:
-        # This helps the API documentation show a real example
-        schema_extra = {
+    # Updated for Pydantic V2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "person_age": 25,
                 "person_income": 55000,
@@ -30,3 +30,4 @@ class LoanApplication(BaseModel):
                 "cb_person_cred_hist_length": 3
             }
         }
+    )

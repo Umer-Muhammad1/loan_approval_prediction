@@ -1,4 +1,4 @@
-# 1. MLFLOW DEPLOYMENT
+# 1. MLFLOW DEPLOYMENT (Using the universal Kedro image)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +9,7 @@ spec:
     matchLabels:
       app: mlflow
   strategy:
-    type: Recreate
+    type: Recreate # Ensures only one pod accesses the SQLite DB at a time
   template:
     metadata:
       labels:
@@ -17,23 +17,20 @@ spec:
     spec:
       containers:
         - name: mlflow-server
-          image: mumerarif/kedro_pipelines:fraud_detection-mlflow
+          image: mumerarif/kedro_pipelines:latest # Standardized tag
+          # OVERRIDE: Tell this container to be an MLflow server, not an API
+          command: ["mlflow"]
           args:
-            - mlflow
-            - server
-            - --host
-            - 0.0.0.0
-            - --port
+            - "server"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
             - "5000"
-            - --backend-store-uri
-            - sqlite:///mlflow-data/mlflow.db
-            - --default-artifact-root
-            - mlflow-artifacts:/
-            - --artifacts-destination
-            - /app/mlruns
-            - --serve-artifacts
-            - --allowed-hosts
-            - "*"
+            - "--backend-store-uri"
+            - "sqlite:///mlflow-data/mlflow.db"
+            - "--default-artifact-root"
+            - "/mlflow-data/artifacts"
+            - "--serve-artifacts"
           ports:
             - containerPort: 5000
           volumeMounts:
@@ -44,7 +41,7 @@ spec:
           persistentVolumeClaim:
             claimName: mlflow-pvc
 ---
-# 2. MLFLOW SERVICE
+# 2. MLFLOW INTERNAL SERVICE
 apiVersion: v1
 kind: Service
 metadata:
@@ -74,10 +71,17 @@ spec:
     spec:
       containers:
       - name: loan-api
-        image: mumerarif/kedro_pipelines:fraud_detection_api_v1
+        image: mumerarif/kedro_pipelines:latest # Standardized tag
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
+        # READINESS PROBE: API won't get traffic until artifacts are synced
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 10
         env:
         - name: MLFLOW_TRACKING_URI
           value: "http://mlflow-service:5000"
@@ -86,7 +90,7 @@ spec:
         - name: MODEL_ALIAS
           value: "production"
 ---
-# 4. LOAN API SERVICE (Exposed to Internet)
+# 4. LOAN API PUBLIC SERVICE
 apiVersion: v1
 kind: Service
 metadata:
@@ -98,7 +102,6 @@ spec:
   ports:
   - port: 80
     targetPort: 8000
-
 
 # kubectl apply -f pvc.yaml
 # kubectl apply -f deployment.yaml
