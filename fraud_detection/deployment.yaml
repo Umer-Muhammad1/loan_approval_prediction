@@ -74,7 +74,7 @@ spec:
     spec:
       containers:
       - name: loan-api
-        image: mumerarif/kedro_pipelines:fraud_detection_api_v2
+        image: mumerarif/kedro_pipelines:fraud_detection_api_v1
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

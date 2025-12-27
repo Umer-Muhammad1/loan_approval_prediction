@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: mlflow
+  name: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: mlflow
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: mlflow
+    spec:
+      containers:
+        - args:
+            - mlflow
+            - server
+            - --host
+            - 0.0.0.0
+            - --port
+            - "5000"
+            - --backend-store-uri
+            - sqlite:///mlflow.db
+            - --default-artifact-root
+            - mlflow-artifacts:/
+            - --artifacts-destination
+            - /app/mlruns
+            - --serve-artifacts
+            - --allowed-hosts
+            - "*"
+          image: mumerarif/kedro_pipelines:fraud_detection-mlflow
+          name: mlflow-server
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: mlflow
+  name: mlflow-service
+spec:
+  ports:
+    - name: "5000"
+      port: 5000
+      targetPort: 5000
+  selector:
+    io.kompose.service: mlflow
+  type: ClusterIP
