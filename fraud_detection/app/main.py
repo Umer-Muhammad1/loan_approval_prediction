@@ -5,6 +5,8 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from app.schemas import LoanApplication
+from fastapi.responses import JSONResponse
+
 
 # --- Configuration ---
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-service:5000")
@@ -112,12 +114,17 @@ def predict(payload: LoanApplication):
 
 @app.get("/health")
 def health():
+    # Only return 200 if ALL artifacts are loaded
     is_ready = all([model is not None, scaler is not None, encoder is not None])
-    return {
-        "status": "healthy" if is_ready else "initializing",
-        "model_ready": model is not None,
-        "preprocessing_ready": all([scaler is not None, encoder is not None])
-    }
+    
+    if is_ready:
+        return {"status": "healthy"}
+    else:
+        # Returning a 503 tells Kubernetes "I'm alive, but don't send traffic yet"
+        return JSONResponse(
+            status_code=503,
+            content={"status": "initializing"}
+        )
 
 @app.get("/")
 def home():

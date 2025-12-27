@@ -29,8 +29,12 @@ spec:
             - "--backend-store-uri"
             - "sqlite:///mlflow-data/mlflow.db"
             - "--default-artifact-root"
-            - "/mlflow-data/artifacts"
-            - "--serve-artifacts"
+            - mlflow-artifacts:/
+            - --artifacts-destination
+            - /app/mlruns
+            - --serve-artifacts
+            - "--allowed-hosts"
+            - "*"
           ports:
             - containerPort: 5000
           volumeMounts:
@@ -114,4 +118,5 @@ spec:
 # kubectl delete deployment deployment_name
 # kubectl delete service service_name
 # kubectl delete pod pod_name
-# kubectl logs -l app=loan-api -f  #to see all the logs
+# kubectl logs -l app=loan-api -f  #to see all the lo
+# kubectl rollout restart deployment loan-api-deployment    %%% to restart a deployment
