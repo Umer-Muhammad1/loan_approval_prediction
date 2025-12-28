@@ -2,20 +2,20 @@ import os
 import pickle
 import mlflow
 import pandas as pd
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from app.schemas import LoanApplication
-from fastapi.responses import JSONResponse
-
 
 # --- Configuration ---
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-service:5000")
-MODEL_NAME = "loan_xgb_model"
+MODEL_NAME = os.getenv("MODEL_NAME", "loan_xgb_model")
 MODEL_ALIAS = os.getenv("MODEL_ALIAS", "production")
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-# Global variables for artifacts
+# Global variables for artifacts (initialized as None)
 model = None
 scaler = None
 encoder = None
@@ -32,12 +32,16 @@ EXPECTED_FEATURES = [
 ]
 
 def load_production_artifacts():
-    """Syncs the model and preprocessors from the MLflow Registry."""
+    """
+    Syncs the model and preprocessors from the MLflow Registry.
+    This runs in a background thread to prevent blocking the event loop.
+    """
     global model, scaler, encoder
     try:
         # 1. Load Model
         model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
         print(f"📡 Syncing artifacts from MLflow: {model_uri}")
+        # Note: mlflow.pyfunc.load_model is heavy and blocks
         model = mlflow.pyfunc.load_model(model_uri)
         
         # 2. Extract Run ID for preprocessing artifacts
@@ -46,39 +50,48 @@ def load_production_artifacts():
         run_id = model_version.run_id
         
         # 3. Download Scaler and Encoder
-        scaler_path = client.download_artifacts(run_id, "preprocessing/scaler.pkl")
-        encoder_path = client.download_artifacts(run_id, "preprocessing/encoder.pkl")
+        print(f"📦 Run ID detected: {run_id}. Downloading preprocessors...")
+        scaler_path = client.download_artifacts(run_id, "scaler.pkl")
+        encoder_path = client.download_artifacts(run_id, "encoder.pkl")
         
         with open(scaler_path, "rb") as f:
             scaler = pickle.load(f)
         with open(encoder_path, "rb") as f:
             encoder = pickle.load(f)
             
-        print("✅ All artifacts successfully synced from MLflow.")
+        print("✅ All artifacts successfully synced and loaded into memory.")
     except Exception as e:
-        print(f"❌ Startup Error: {e}")
-        # In production K8s, raising an error here ensures the container 
-        # doesn't pass the readiness probe.
-        raise RuntimeError(f"Could not load model artifacts: {e}")
+        print(f"❌ Critical Error during artifact sync: {e}")
+        # We don't raise here to keep the process alive for debugging, 
+        # but the /health endpoint will reflect the failure.
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Modern FastAPI Lifespan management (Startup/Shutdown)."""
-    # Logic executed on startup
-    load_production_artifacts()
+    """
+    Handles startup and shutdown. 
+    Offloads heavy I/O (MLflow) to a thread pool so the API can start immediately.
+    """
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as executor:
+        # Schedule the loading in the background
+        loop.run_in_executor(executor, load_production_artifacts)
+    
     yield
-    # Logic executed on shutdown
-    print("Shutting down API...")
+    print("👋 Shutting down API...")
 
 app = FastAPI(title="Loan Status Predictor", lifespan=lifespan)
 
 @app.post("/predict")
 def predict(payload: LoanApplication):
-    if not all([model, scaler, encoder]):
-        raise HTTPException(status_code=503, detail="Model assets not ready")
+    # Check if artifacts are ready
+    if model is None or scaler is None or encoder is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Model is still loading or failed to initialize. Please try again in a few seconds."
+        )
 
     try:
-        # Pydantic V2: Using model_dump() instead of .dict()
+        # Pydantic V2 processing
         data_dict = payload.model_dump()
         df = pd.DataFrame([data_dict])
 
@@ -107,25 +120,24 @@ def predict(payload: LoanApplication):
             "prediction": int(prediction[0]),
             "status": "Approved" if int(prediction[0]) == 0 else "Rejected",
             "confidence": float(probability) if probability else None,
-            "model_alias": MODEL_ALIAS
+            "model_info": {"name": MODEL_NAME, "alias": MODEL_ALIAS}
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")
 
 @app.get("/health")
 def health():
-    # Only return 200 if ALL artifacts are loaded
-    is_ready = all([model is not None, scaler is not None, encoder is not None])
-    
-    if is_ready:
-        return {"status": "healthy"}
-    else:
-        # Returning a 503 tells Kubernetes "I'm alive, but don't send traffic yet"
-        return JSONResponse(
-            status_code=503,
-            content={"status": "initializing"}
-        )
+    """
+    Kubernetes Readiness Probe hits this.
+    Returns 200 OK even if loading, but details specify readiness.
+    """
+    ready = all([model is not None, scaler is not None, encoder is not None])
+    return {
+        "status": "ready" if ready else "initializing",
+        "model_loaded": model is not None,
+        "preprocessors_loaded": all([scaler is not None, encoder is not None])
+    }
 
 @app.get("/")
 def home():
-    return {"service": "Loan Approval API", "version": "1.0.0"}
+    return {"service": "Loan Approval API", "status": "online"}

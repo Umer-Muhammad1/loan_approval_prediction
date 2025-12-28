@@ -28,13 +28,17 @@ spec:
             - "5000"
             - "--backend-store-uri"
             - "sqlite:///mlflow-data/mlflow.db"
-            - "--default-artifact-root"
+            - --default-artifact-root
             - mlflow-artifacts:/
             - --artifacts-destination
             - /app/mlruns
             - --serve-artifacts
-            - "--allowed-hosts"
+            - --allowed-hosts
             - "*"
+        # env:
+        #   # This tells the underlying server to ignore the Host header check
+        #   - name: MLFLOW_GUNICORN_OPTS
+        #     value: "--forwarded-allow-ips='*' --proxy-allow-from='*'"
           ports:
             - containerPort: 5000
           volumeMounts:
@@ -118,5 +122,4 @@ spec:
 # kubectl delete deployment deployment_name
 # kubectl delete service service_name
 # kubectl delete pod pod_name
-# kubectl logs -l app=loan-api -f  #to see all the lo
-# kubectl rollout restart deployment loan-api-deployment    %%% to restart a deployment
+# kubectl logs -l app=loan-api -f  #to see all the logs
