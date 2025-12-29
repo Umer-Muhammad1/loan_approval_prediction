@@ -204,11 +204,11 @@ X_test_encoded:
 
 X_train_scaled:
   type: pandas.CSVDataset
-  filepath: data/04_feature/scaled_X_train.csv
+  filepath: data/05_model_input/X_train_scaled.csv
 
 X_test_scaled:
   type: pandas.CSVDataset
-  filepath: data/04_feature/scaled_X_test.csv
+  filepath: data/05_model_input/X_test_scaled.csv
 
 
 model_paths:
@@ -358,3 +358,29 @@ fitted_encoder:
   dataset:
     type: pickle.PickleDataset
     filepath: data/06_models/encoder.pkl
+
+    
+  
+bussiness_metrics:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pandas.CSVDataset  # or any valid kedro DataSet
+      filepath: data/08_monitoring/bussiness_metrics.csv
+      save_args:
+        index: False
+
+
+portfolio_segments:
+  type: MemoryDataset
+
+loan_economics:
+  type: MemoryDataset
+
+model_financials:
+  type: MemoryDataset
+
+baseline_financials:
+  type: MemoryDataset
+
+risk_metrics:
+  type: MemoryDataset

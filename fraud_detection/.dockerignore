@@ -5,6 +5,7 @@
 Dockerfile
 .dockerignore
 
+
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
 
@@ -24,3 +25,5 @@ results
 !notebooks/.gitkeep
 !references/.gitkeep
 !results/.gitkeep
+
+.pytest_cache

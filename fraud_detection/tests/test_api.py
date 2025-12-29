@@ -52,13 +52,17 @@ def test_predict_success(mock_artifacts):
     response = client.post("/predict", json=payload)
     
     assert response.status_code == 200
-    assert response.json()["status"] == "Approved"
-    # Change "model_version" to "model_alias"
-    assert "model_alias" in response.json()
-
+    data = response.json()
+    assert data["status"] == "Approved"
     
+    # Updated: Check for 'model_info' instead of 'model_alias'
+    assert "model_info" in data
+    assert data["model_info"]["alias"] == "production"
+
 def test_health_check_ready(mock_artifacts):
-    # This tests if the health endpoint correctly reports 'healthy'
+    # This tests if the health endpoint correctly reports 'ready'
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    
+    # Updated: Checking for 'ready' instead of 'healthy'
+    assert response.json()["status"] == "ready"

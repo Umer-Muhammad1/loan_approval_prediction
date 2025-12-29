@@ -2,7 +2,7 @@ name: CI_CD Pipeline
 
 on:
   push:
-    branches: [ main, k8]
+    branches: [ main, k8 ]
     tags: 
       - 'v*' # This triggers the workflow for any tag starting with 'v' (e.g., v1.0.1)
   pull_request:
@@ -86,7 +86,7 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/kedro_pipelines
           tags: |
             # Tag with "latest" on every push to main
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/k8' }}
             # Tag with the Git Tag (v1.0.0) if it exists
             type=ref,event=tag
             # Tag with the SHA for internal tracking
@@ -109,11 +109,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-#  deploy:
+ # deploy:
  #   name: Deploy to Render
-  #  needs: [build-and-push] # Replace this with the name of your push job
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Trigger Deploy Hook
-   #     run: |
-    #      curl -f ${{ secrets.RENDER_DEPLOY_HOOK }}
+ #   needs: [build-and-push] # Replace this with the name of your push job
+ #   runs-on: ubuntu-latest
+ #   steps:
+ #     - name: Trigger Deploy Hook
+ #       run: |
+ #         curl -f ${{ secrets.RENDER_DEPLOY_HOOK }}
