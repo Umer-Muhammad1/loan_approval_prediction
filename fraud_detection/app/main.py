@@ -72,6 +72,8 @@ def load_production_artifacts():
             encoder = pickle.load(f)
             
         print("✅ All artifacts successfully synced and loaded into memory.")
+
+        
     except Exception as e:
         print(f"❌ Critical Error during artifact sync: {e}")
         # We don't raise here to keep the process alive for debugging, 

@@ -51,19 +51,19 @@ def create_pipeline(**kwargs):
             ),
 
             # ==================== CROSS-VALIDATION STAGE ====================
-            node(
-                func=cross_validate_model,
-                inputs=[
-                    "best_model",
-                    "best_model_name",
-                    #"best_run_id",
-                    "X_train_scaled", "y_train",
-                    "params:cv_folds"
-                ],
-                outputs=["cv_scores", "cv_mean", "cv_std"],
-                name="cross_validate_best_model_node",
-                tags=["model_training" , "cross_validation"]
-            ),
+           # node(
+           #     func=cross_validate_model,
+           #     inputs=[
+           #         "best_model",
+           #         "best_model_name",
+           #         #"best_run_id",
+           #         "X_train_scaled", "y_train",
+           #         "params:cv_folds"
+           #     ],
+           #     outputs=["cv_scores", "cv_mean", "cv_std"],
+           #     name="cross_validate_best_model_node",
+           #     tags=["model_training" , "cross_validation"]
+           # ),
 
             # ==================== TESTING STAGE ====================
             node(

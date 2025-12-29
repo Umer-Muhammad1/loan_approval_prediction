@@ -41,7 +41,7 @@ def generate_feature_importance(
 
 def plot_feature_importance(
     feature_importance: Optional[pd.DataFrame],
-    top_n: int = 20
+    top_n: int = 10
 ) -> plt.Figure:
     """
     Generate a feature importance bar plot.
@@ -91,6 +91,7 @@ def generate_roc_auc_plot(
     ax.legend(loc="lower right")
 
     return fig
+
 
 def calculate_business_impact(y_test, y_pred,  loan_amt_test):
     """
