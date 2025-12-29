@@ -2,6 +2,7 @@
 This is a boilerplate pipeline 'bussiness_metrics'
 generated using Kedro 0.19.10
 """
+from typing import Dict
 from sklearn.metrics import confusion_matrix , roc_curve , auc
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,7 +17,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.patches import Rectangle, FancyBboxPatch, Circle
 from matplotlib.gridspec import GridSpec
 import matplotlib.patches as mpatches
-
+import mlflow
 
 def generate_feature_importance(
     final_model_results: dict,
@@ -91,6 +92,333 @@ def generate_roc_auc_plot(
     ax.legend(loc="lower right")
 
     return fig
+
+
+def segment_portfolio(
+    y_true,
+    y_pred,
+    loan_amounts
+) -> Dict[str, Dict[str, float]]:
+    """
+    Segment the loan portfolio based on model decisions and true outcomes.
+
+    Returns counts and total amounts for each segment.
+    """
+
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+    segments = {
+        "approved_good": {
+            "count": int(tp),
+            "amount": float(np.sum(loan_amounts[(y_pred == 1) & (y_true == 1)]))
+        },
+        "approved_bad": {
+            "count": int(fp),
+            "amount": float(np.sum(loan_amounts[(y_pred == 1) & (y_true == 0)]))
+        },
+        "rejected_good": {
+            "count": int(fn),
+            "amount": float(np.sum(loan_amounts[(y_pred == 0) & (y_true == 1)]))
+        },
+        "rejected_bad": {
+            "count": int(tn),
+            "amount": float(np.sum(loan_amounts[(y_pred == 0) & (y_true == 0)]))
+        }
+    }
+
+    return segments
+
+
+
+def loan_economics_parameters() -> Dict[str, float]:
+    """
+    Centralized loan economics assumptions.
+    Can be overridden via Kedro config.
+    """
+
+    return {
+        "loan_term_years": 3.0,
+        "interest_rate": 0.085,
+        "operating_cost_rate": 0.025,
+        "cost_of_capital": 0.04,
+        "default_loss_rate": 0.65,
+        "avg_time_to_default": 0.5
+    }
+
+
+
+def calculate_model_portfolio_financials(
+    segments: Dict[str, Dict[str, float]],
+    econ: Dict[str, float]
+) -> Dict[str, float]:
+    """
+    Compute financial performance of the model-approved portfolio.
+    """
+
+    good_amt = segments["approved_good"]["amount"]
+    bad_amt = segments["approved_bad"]["amount"]
+
+    # Revenue
+    interest_good = good_amt * econ["interest_rate"] * econ["loan_term_years"]
+    interest_bad = bad_amt * econ["interest_rate"] * econ["avg_time_to_default"]
+
+    # Costs
+    costs_good = good_amt * (
+        econ["operating_cost_rate"] + econ["cost_of_capital"]
+    ) * econ["loan_term_years"]
+
+    costs_bad = bad_amt * (
+        econ["operating_cost_rate"] + econ["cost_of_capital"]
+    ) * econ["avg_time_to_default"]
+
+    # Losses
+    credit_losses = bad_amt * econ["default_loss_rate"]
+
+    net_profit = (
+        interest_good
+        + interest_bad
+        - costs_good
+        - costs_bad
+        - credit_losses
+    )
+
+    total_approved = good_amt + bad_amt
+    roi_annualized = (
+        (net_profit / total_approved) / econ["loan_term_years"] * 100
+        if total_approved > 0
+        else 0.0
+    )
+
+    return {
+        "net_profit": net_profit,
+        "roi_annualized_pct": roi_annualized,
+        "total_approved_amount": total_approved
+    }
+
+
+
+def calculate_baseline_approve_all(
+    y_true,
+    loan_amounts,
+    econ: Dict[str, float]
+) -> Dict[str, float]:
+    """
+    Baseline: approve all loans (no model).
+    """
+
+    good_amt = np.sum(loan_amounts[y_true == 1])
+    bad_amt = np.sum(loan_amounts[y_true == 0])
+
+    interest_good = good_amt * econ["interest_rate"] * econ["loan_term_years"]
+    interest_bad = bad_amt * econ["interest_rate"] * econ["avg_time_to_default"]
+
+    costs_good = good_amt * (
+        econ["operating_cost_rate"] + econ["cost_of_capital"]
+    ) * econ["loan_term_years"]
+
+    costs_bad = bad_amt * (
+        econ["operating_cost_rate"] + econ["cost_of_capital"]
+    ) * econ["avg_time_to_default"]
+
+    credit_losses = bad_amt * econ["default_loss_rate"]
+
+    net_profit = (
+        interest_good
+        + interest_bad
+        - costs_good
+        - costs_bad
+        - credit_losses
+    )
+
+    total_amt = good_amt + bad_amt
+    roi_annualized = (
+        (net_profit / total_amt) / econ["loan_term_years"] * 100
+        if total_amt > 0
+        else 0.0
+    )
+
+    return {
+        "baseline_net_profit": net_profit,
+        "baseline_roi_annualized_pct": roi_annualized
+    }
+
+
+def calculate_risk_metrics(
+    segments: Dict[str, Dict[str, float]]
+) -> Dict[str, float]:
+    """
+    Compute risk-related metrics.
+    """
+
+    approved_good = segments["approved_good"]["count"]
+    approved_bad = segments["approved_bad"]["count"]
+
+    total_approved = approved_good + approved_bad
+
+    default_rate = (
+        approved_bad / total_approved
+        if total_approved > 0
+        else 0.0
+    )
+
+    return {
+        "approved_default_rate": default_rate
+    }
+
+
+def plot_business_summary(
+    model_financials,
+    baseline_financials
+):
+    """
+    Visualization-only node.
+    """
+
+    labels = ["Baseline", "Model"]
+    profits = [
+        baseline_financials["baseline_net_profit"],
+        model_financials["net_profit"]
+    ]
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(labels, profits)
+    plt.title("Net Profit Comparison")
+    plt.ylabel("Net Profit")
+    plt.tight_layout()
+    plt.show()
+
+
+
+def log_business_metrics(
+    model_financials,
+    baseline_financials,
+    risk_metrics
+):
+    """
+    Centralized MLflow logging node.
+    """
+
+    mlflow.log_metric("model_net_profit", model_financials["net_profit"])
+    mlflow.log_metric("model_roi_annualized_pct", model_financials["roi_annualized_pct"])
+
+    mlflow.log_metric("baseline_net_profit", baseline_financials["baseline_net_profit"])
+    mlflow.log_metric(
+        "baseline_roi_annualized_pct",
+        baseline_financials["baseline_roi_annualized_pct"]
+    )
+
+    mlflow.log_metric(
+        "approved_default_rate",
+        risk_metrics["approved_default_rate"]
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def calculate_business_impact(y_test, y_pred,  loan_amt_test):
@@ -375,14 +703,14 @@ def calculate_business_impact(y_test, y_pred,  loan_amt_test):
     }
     
     # Log to MLflow
-    try:
-        import mlflow
-        if mlflow.active_run():
-            for key, value in metrics.items():
-                mlflow.log_metric(f"enhanced_{key}", float(value))
-            print("\n✅ Enhanced metrics logged to MLflow")
-    except Exception as e:
-        print(f"\nNote: MLflow logging skipped - {e}")
+    #try:
+    #    import mlflow
+    #    if mlflow.active_run():
+    #        for key, value in metrics.items():
+    #            mlflow.log_metric(f"enhanced_{key}", float(value))
+    #        print("\n✅ Enhanced metrics logged to MLflow")
+    #except Exception as e:
+    #    print(f"\nNote: MLflow logging skipped - {e}")
     
     return pd.DataFrame([metrics])
 

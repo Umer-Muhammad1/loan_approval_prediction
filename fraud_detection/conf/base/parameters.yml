@@ -91,3 +91,12 @@ xgb_params:
   # Evaluation (handled separately in fit)
   eval_metric: 'auc'
   early_stopping_rounds: 10  # Optional
+
+
+loan_economics:
+  loan_term_years: 3.0
+  interest_rate: 0.085
+  operating_cost_rate: 0.025
+  cost_of_capital: 0.04
+  default_loss_rate: 0.65
+  avg_time_to_default: 0.5

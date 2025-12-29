@@ -26,7 +26,7 @@ def register_pipelines() -> dict:
     return {
         "__default__": __default__,
        # "data_processing": exploratory_data_analysis_pipeline,
-        "de": data_engineering_pipeline_part,
+        "data_engineering": data_engineering_pipeline_part,
         "modelling_pipeline": model_pipeline_part,
         
         "bussiness_pipeline": bussiness_pipeline_part,

@@ -358,3 +358,29 @@ fitted_encoder:
   dataset:
     type: pickle.PickleDataset
     filepath: data/06_models/encoder.pkl
+
+    
+  
+bussiness_metrics:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: pandas.CSVDataset  # or any valid kedro DataSet
+      filepath: data/08_monitoring/bussiness_metrics.csv
+      save_args:
+        index: False
+
+
+portfolio_segments:
+  type: MemoryDataset
+
+loan_economics:
+  type: MemoryDataset
+
+model_financials:
+  type: MemoryDataset
+
+baseline_financials:
+  type: MemoryDataset
+
+risk_metrics:
+  type: MemoryDataset
