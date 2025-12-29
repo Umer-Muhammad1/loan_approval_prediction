@@ -37,16 +37,28 @@ def load_production_artifacts():
     This runs in a background thread to prevent blocking the event loop.
     """
     global model, scaler, encoder
+    client = mlflow.tracking.MlflowClient()
+
     try:
-        # 1. Load Model
-        model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-        print(f"📡 Syncing artifacts from MLflow: {model_uri}")
-        # Note: mlflow.pyfunc.load_model is heavy and blocks
-        model = mlflow.pyfunc.load_model(model_uri)
+        # 1. Primary Attempt: Use Alias
+        try:
+            model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
+            print(f"📡 Attempting to load primary model: {model_uri}")
+            model = mlflow.pyfunc.load_model(model_uri)
+            model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
+            print(f"✅ Loaded model using alias: {MODEL_ALIAS}")
         
-        # 2. Extract Run ID for preprocessing artifacts
-        client = mlflow.tracking.MlflowClient()
-        model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
+        # 2. Fallback Attempt: Use Latest Version
+        except Exception as alias_err:
+            print(f"⚠️ Alias '{MODEL_ALIAS}' not found. Falling back to latest version...")
+            model_uri = f"models:/{MODEL_NAME}/latest"
+            model = mlflow.pyfunc.load_model(model_uri)
+            
+            # Get the version metadata for the 'latest' model to find the correct Run ID
+            # In MLflow, the latest version is usually the one with the highest version number
+            versions = client.get_latest_versions(MODEL_NAME)
+            model_version = versions[0] # The first item is the most recent
+            print(f"✅ Loaded latest version (Version {model_version.version})")
         run_id = model_version.run_id
         
         # 3. Download Scaler and Encoder

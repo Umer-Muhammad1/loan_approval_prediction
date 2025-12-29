@@ -18,6 +18,8 @@ notebooks/**
 # also keep all .gitkeep files
 !.gitkeep
 !data/06_models/encoder.pkl
+!data/01_raw/raw_loan_prediction.csv
+!data/05_model_input/X_test_scaled.csv
 !data/06_models/scaler.pkl
 # also keep the example dataset
 !data/01_raw/companies.csv

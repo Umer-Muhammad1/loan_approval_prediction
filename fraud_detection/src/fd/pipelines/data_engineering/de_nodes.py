@@ -255,7 +255,7 @@ def train_test_df_split(features: pd.DataFrame, target: pd.Series, test_size: fl
 #    X_test_final = X_test.drop(columns=stand_col).join(X_test_scaled_df)
 #
 #    return X_train_final, X_test_final
-
+import mlflow
 def one_hot_encode(X_train: pd.DataFrame, X_test: pd.DataFrame):
     # 1. Identify categorical columns
     cat_cols = X_train.select_dtypes(['object', 'category']).columns
@@ -298,6 +298,7 @@ def scale_features(X_train: pd.DataFrame, X_test: pd.DataFrame, stand_col: list)
 
     X_train_final = X_train.drop(columns=stand_col).join(X_train_scaled)
     X_test_final = X_test.drop(columns=stand_col).join(X_test_scaled)
-
+    X_test_final.to_csv("reference_data.csv", index=False)
+    mlflow.log_artifact("reference_data.csv", artifact_path="monitoring")
     # Return the scaler for the API
     return X_train_final, X_test_final, scaler
