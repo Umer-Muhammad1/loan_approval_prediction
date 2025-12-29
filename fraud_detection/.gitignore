@@ -24,6 +24,11 @@ notebooks/**
 !data/01_raw/reviews.csv
 !data/01_raw/shuttles.xlsx
 
+!notebooks/exploration.ipynb
+!notebooks/modelling.ipynb
+!notebooks/exploration.ipynb
+!notebooks/exploration.ipynb
+
 # ignore kedro-viz metadata
 .viz
 
