@@ -4,10 +4,10 @@
 # ignore all local configuration
 conf/local/**
 !conf/local/.gitkeep
-
+conf/docker
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
-
+conf/**
 # ignore everything in the following folders
 data/**
 notebooks/**
@@ -128,7 +128,7 @@ local_settings.py
 # Flask stuff:
 instance/
 .webassets-cache
-
+results
 # Scrapy stuff:
 .scrapy
 
@@ -164,6 +164,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
 
 # mlflow local runs
 mlruns/*
