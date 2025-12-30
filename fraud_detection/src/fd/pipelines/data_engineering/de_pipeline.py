@@ -82,7 +82,7 @@ def create_pipeline(**kwargs):
                 func=quick_validate_csv,
                 inputs="raw_data",
                 outputs="validated_loan_data",
-                name="data_validation_gatekeeper",
+                name="data_validation_node",
                 tags="data_engineering",
             ),
             node(

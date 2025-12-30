@@ -73,7 +73,7 @@ jobs:
       - name: Validate data schema
         run: |
           # Use the 'to_nodes' or 'pipeline' flag to run only validation
-          kedro run --pipeline=de --to-nodes=your_ge_validation_node_name
+          kedro run --pipeline=data_engineering --nodes=data_validation_node
 
   build-and-push:
     runs-on: ubuntu-latest
