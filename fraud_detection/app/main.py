@@ -19,6 +19,7 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 model = None
 scaler = None
 encoder = None
+DECISION_THRESHOLD = 0.5
 
 # Exact order expected by the XGBoost model
 EXPECTED_FEATURES = [
@@ -127,14 +128,23 @@ def predict(payload: LoanApplication):
         df_final = df_encoded[EXPECTED_FEATURES]
 
         # --- Inference ---
-        prediction = model.predict(df_final)
-        probability = model.predict_proba(df_final).max() if hasattr(model, "predict_proba") else None
+        #prediction = model.predict(df_final)
+        positive_class_index = list(model.classes_).index(1)
+        proba_approve = model.predict_proba(df_final)[0, positive_class_index]
+        # Threshold-based decision
+        decision = int(proba_approve >= DECISION_THRESHOLD)
 
         return {
-            "prediction": int(prediction[0]),
-            "status": "Approved" if int(prediction[0]) == 0 else "Rejected",
-            "confidence": float(probability) if probability else None,
-            "model_info": {"name": MODEL_NAME, "alias": MODEL_ALIAS}
+            "prediction": decision,  # 0 = Rejected, 1 = Approved
+            "status": "Approved" if decision == 1 else "Rejected",
+            "confidence": float(proba_approve),
+            "threshold": DECISION_THRESHOLD,
+            "model_info": {
+                "name": MODEL_NAME,
+                "alias": MODEL_ALIAS,
+                "positive_class": 1,
+                "business_meaning": "1=Approved, 0=Rejected"
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")

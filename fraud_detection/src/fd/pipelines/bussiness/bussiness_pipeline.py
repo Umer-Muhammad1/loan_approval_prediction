@@ -8,7 +8,7 @@ from kedro.pipeline import Pipeline, pipeline , node
 from .bussiness_nodes import (calculate_business_impact ,visualize_business_metrics , segment_portfolio , 
                               plot_feature_importance ,generate_feature_importance, generate_roc_auc_plot , calculate_risk_metrics,
                               loan_economics_parameters , calculate_model_portfolio_financials, calculate_baseline_approve_all
-                              , plot_business_summary , log_business_metrics
+                              , plot_business_summary , log_business_metrics , create_business_dashboard
                               )
 
 def create_pipeline(**kwargs):
@@ -90,16 +90,16 @@ def create_pipeline(**kwargs):
             ),
 
             # 6️⃣ Visualization (optional, non-blocking)
-            node(
-                func=plot_business_summary,
-                inputs=[
-                    "model_financials",
-                    "baseline_financials",
-                ],
-                outputs=None,
-                name="business_dashboard_node",
-                tags=["bussiness"]
-            ),
+           # node(
+           #     func=plot_business_summary,
+           #     inputs=[
+           #         "model_financials",
+           #         "baseline_financials",
+           #     ],
+           #     outputs="plot_summary",
+           #     name="business_dashboard_node",
+           #     tags=["bussiness"]
+           # ),
 
             # 7️⃣ Centralized MLflow logging
             node(
@@ -113,29 +113,35 @@ def create_pipeline(**kwargs):
                 name="mlflow_business_metrics_logging_node",
                 tags=["bussiness"]
             ),
-
-
-
-
-
-
-
             node(
-                func=calculate_business_impact, 
-                inputs=["y_test", "y_pred", "loan_amt_test"],
-                outputs="bussiness_metrics", 
-                name="business_metrics_node",
+                func=create_business_dashboard,
+                inputs=["model_financials", "baseline_financials", "risk_metrics"],
+                outputs="business_dashboard_plot",
+                name="create_business_dashboard_node",
                 tags=["bussiness"]
-                ),
-            node(
-                func=visualize_business_metrics, 
-                inputs="bussiness_metrics",
-                outputs="plot_bussiness_metrics", 
-                name="visualize_business_metrics_node",
-                tags=["bussiness","visualisations"]
-                )
-            
-            ])
+            )
+
+
+
+
+
+
+        #    node(
+        #        func=calculate_business_impact, 
+        #        inputs=["y_test", "y_pred", "loan_amt_test"],
+        #        outputs="bussiness_metrics", 
+        #        name="business_metrics_node",
+        #        tags=["bussiness"]
+        #        ),
+        #    node(
+        #        func=visualize_business_metrics, 
+        #        inputs="bussiness_metrics",
+        #        outputs="plot_bussiness_metrics", 
+        #        name="visualize_business_metrics_node",
+        #        tags=["bussiness","visualisations"]
+        #        )
+        #    
+           ])
     
     
     

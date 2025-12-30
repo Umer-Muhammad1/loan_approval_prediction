@@ -15,7 +15,7 @@ Experiment tracking and model registry
 
 Containerization and CI/CD
 
-Kubernetes-based deployment
+Kubernetes-based depl'oyment
 
 Model serving via FastAPI
 

@@ -3,7 +3,7 @@ This is a boilerplate pipeline 'bussiness_metrics'
 generated using Kedro 0.19.10
 """
 from typing import Dict
-from sklearn.metrics import confusion_matrix , roc_curve , auc
+from sklearn.metrics import confusion_matrix , roc_curve , auc , ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import pandas as pd
 from typing import Optional
@@ -18,6 +18,7 @@ from matplotlib.patches import Rectangle, FancyBboxPatch, Circle
 from matplotlib.gridspec import GridSpec
 import matplotlib.patches as mpatches
 import mlflow
+
 
 def generate_feature_importance(
     final_model_results: dict,
@@ -94,35 +95,58 @@ def generate_roc_auc_plot(
     return fig
 
 
+
+
 def segment_portfolio(
     y_true,
     y_pred,
-    loan_amounts
+    loan_amounts,
+    parameters: Dict = None
 ) -> Dict[str, Dict[str, float]]:
-    """
-    Segment the loan portfolio based on model decisions and true outcomes.
+    
+    # 1. Ensure everything is 1D (Flatten DataFrames/Series to Numpy Arrays)
+    # This prevents the "Unable to coerce to Series" and "Truth value ambiguous" errors
+    y_true_arr = np.array(y_true).flatten()
+    y_pred_arr = np.array(y_pred).flatten()
+    loan_amt_arr = np.array(loan_amounts).flatten()
 
-    Returns counts and total amounts for each segment.
-    """
+    # 2. Calculate confusion matrix
+    tn, fp, fn, tp = confusion_matrix(y_true_arr, y_pred_arr).ravel()
 
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    # --- START: NEW CONFUSION MATRIX PLOT LOGIC ---
+    labels = ["Rejected", "Approved"] if not parameters else parameters.get("labels", ["Rejected", "Approved"])
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # Re-calculate matrix for display to ensure proper format for the plotter
+    cm = confusion_matrix(y_true_arr, y_pred_arr)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    
+    disp.plot(ax=ax, cmap=plt.cm.Blues, values_format='d')
+    plt.title("Loan Prediction Performance")
+    
+    # Save the plot locally and log to MLflow
+    plot_filename = "confusion_matrix.png"
+    plt.savefig(plot_filename)
+    mlflow.log_artifact(plot_filename)
+    plt.close(fig)
 
+    # 3. Use boolean indexing on the flattened arrays
     segments = {
         "approved_good": {
             "count": int(tp),
-            "amount": float(np.sum(loan_amounts[(y_pred == 1) & (y_true == 1)]))
+            "amount": float(np.sum(loan_amt_arr[(y_pred_arr == 1) & (y_true_arr == 1)]))
         },
         "approved_bad": {
             "count": int(fp),
-            "amount": float(np.sum(loan_amounts[(y_pred == 1) & (y_true == 0)]))
+            "amount": float(np.sum(loan_amt_arr[(y_pred_arr == 1) & (y_true_arr == 0)]))
         },
         "rejected_good": {
             "count": int(fn),
-            "amount": float(np.sum(loan_amounts[(y_pred == 0) & (y_true == 1)]))
+            "amount": float(np.sum(loan_amt_arr[(y_pred_arr == 0) & (y_true_arr == 1)]))
         },
         "rejected_bad": {
             "count": int(tn),
-            "amount": float(np.sum(loan_amounts[(y_pred == 0) & (y_true == 0)]))
+            "amount": float(np.sum(loan_amt_arr[(y_pred_arr == 0) & (y_true_arr == 0)]))
         }
     }
 
@@ -132,7 +156,7 @@ def segment_portfolio(
 
 def loan_economics_parameters() -> Dict[str, float]:
     """
-    Centralized loan economics assumptions.
+    Centralized loan paramsomics assumptions.
     Can be overridden via Kedro config.
     """
 
@@ -149,7 +173,7 @@ def loan_economics_parameters() -> Dict[str, float]:
 
 def calculate_model_portfolio_financials(
     segments: Dict[str, Dict[str, float]],
-    econ: Dict[str, float]
+    params: Dict[str, float]
 ) -> Dict[str, float]:
     """
     Compute financial performance of the model-approved portfolio.
@@ -159,20 +183,20 @@ def calculate_model_portfolio_financials(
     bad_amt = segments["approved_bad"]["amount"]
 
     # Revenue
-    interest_good = good_amt * econ["interest_rate"] * econ["loan_term_years"]
-    interest_bad = bad_amt * econ["interest_rate"] * econ["avg_time_to_default"]
+    interest_good = good_amt * params["interest_rate"] * params["loan_term_years"]
+    interest_bad = bad_amt * params["interest_rate"] * params["avg_time_to_default"]
 
     # Costs
     costs_good = good_amt * (
-        econ["operating_cost_rate"] + econ["cost_of_capital"]
-    ) * econ["loan_term_years"]
+        params["operating_cost_rate"] + params["cost_of_capital"]
+    ) * params["loan_term_years"]
 
     costs_bad = bad_amt * (
-        econ["operating_cost_rate"] + econ["cost_of_capital"]
-    ) * econ["avg_time_to_default"]
+        params["operating_cost_rate"] + params["cost_of_capital"]
+    ) * params["avg_time_to_default"]
 
     # Losses
-    credit_losses = bad_amt * econ["default_loss_rate"]
+    credit_losses = bad_amt * params["default_loss_rate"]
 
     net_profit = (
         interest_good
@@ -184,43 +208,53 @@ def calculate_model_portfolio_financials(
 
     total_approved = good_amt + bad_amt
     roi_annualized = (
-        (net_profit / total_approved) / econ["loan_term_years"] * 100
+        (net_profit / total_approved) / params["loan_term_years"] * 100
         if total_approved > 0
         else 0.0
     )
 
     return {
-        "net_profit": net_profit,
-        "roi_annualized_pct": roi_annualized,
-        "total_approved_amount": total_approved
+        "models_approved_good_amount": good_amt,
+        "models_approved_bad_amount":bad_amt,
+        "models_total_approved_amount": total_approved,
+        "models_interest_over_good_amount": interest_good,
+        "models_interest_over_bad_amount": interest_bad,
+        "models_credit_losses": credit_losses,
+        "models_net_profit": net_profit,
+        "models_roi_annualized_pct": roi_annualized,
+        
     }
+
 
 
 
 def calculate_baseline_approve_all(
     y_true,
     loan_amounts,
-    econ: Dict[str, float]
+    params: Dict[str, float]
 ) -> Dict[str, float]:
     """
     Baseline: approve all loans (no model).
     """
+    # Ensure inputs are flat numpy arrays to avoid alignment/Series issues
+    y_true_arr = np.array(y_true).flatten()
+    loan_amt_arr = np.array(loan_amounts).flatten()
 
-    good_amt = np.sum(loan_amounts[y_true == 1])
-    bad_amt = np.sum(loan_amounts[y_true == 0])
+    good_amt = np.sum(loan_amt_arr[y_true_arr == 1])
+    bad_amt = np.sum(loan_amt_arr[y_true_arr == 0])
 
-    interest_good = good_amt * econ["interest_rate"] * econ["loan_term_years"]
-    interest_bad = bad_amt * econ["interest_rate"] * econ["avg_time_to_default"]
+    interest_good = good_amt * params["interest_rate"] * params["loan_term_years"]
+    interest_bad = bad_amt * params["interest_rate"] * params["avg_time_to_default"]
 
     costs_good = good_amt * (
-        econ["operating_cost_rate"] + econ["cost_of_capital"]
-    ) * econ["loan_term_years"]
+        params["operating_cost_rate"] + params["cost_of_capital"]
+    ) * params["loan_term_years"]
 
     costs_bad = bad_amt * (
-        econ["operating_cost_rate"] + econ["cost_of_capital"]
-    ) * econ["avg_time_to_default"]
+        params["operating_cost_rate"] + params["cost_of_capital"]
+    ) * params["avg_time_to_default"]
 
-    credit_losses = bad_amt * econ["default_loss_rate"]
+    credit_losses = bad_amt * params["default_loss_rate"]
 
     net_profit = (
         interest_good
@@ -231,15 +265,23 @@ def calculate_baseline_approve_all(
     )
 
     total_amt = good_amt + bad_amt
-    roi_annualized = (
-        (net_profit / total_amt) / econ["loan_term_years"] * 100
-        if total_amt > 0
-        else 0.0
-    )
+    
+    # Calculation for ROI
+    if total_amt > 0:
+        roi_annualized = (net_profit / total_amt) / params["loan_term_years"] * 100
+    else:
+        roi_annualized = 0.0
 
+    # IMPORTANT: Convert to float() so Kedro can save to JSON
     return {
-        "baseline_net_profit": net_profit,
-        "baseline_roi_annualized_pct": roi_annualized
+        "baseline_good_amount (amount for y_ture's approved)": float(good_amt),
+        "baseline_interest_over_good_amount (int amount for y_ture's approved)": float(interest_good),
+        "baseline_bad_amount (amount for y_ture's rejected)": float(good_amt),
+        "baseline_interest_over_bad_amount (int amount for y_ture's rejected)": float(interest_bad),
+        "baselien_total_amount" : float(total_amt),
+        "baselien_credit_losses" : float(credit_losses),
+        "baseline_net_profit": float(net_profit),
+        "baseline_roi_annualized_pct": float(roi_annualized)
     }
 
 
@@ -262,6 +304,9 @@ def calculate_risk_metrics(
     )
 
     return {
+        "approved_good" :approved_good,
+        "approved_bad" :approved_bad,
+        "total_approved" : total_approved,
         "approved_default_rate": default_rate
     }
 
@@ -275,18 +320,27 @@ def plot_business_summary(
     """
 
     labels = ["Baseline", "Model"]
+    
+    # Use .item() if it's a Series, or float() to ensure it's a scalar
+    def to_scalar(val):
+        if hasattr(val, "item"):
+            return val.item() # Converts 1-element Series/Array to scalar
+        return float(val)
+
     profits = [
-        baseline_financials["baseline_net_profit"],
-        model_financials["net_profit"]
+        to_scalar(baseline_financials["baseline_net_profit"]),
+        to_scalar(model_financials["models_net_profit"])
     ]
 
     plt.figure(figsize=(8, 5))
-    plt.bar(labels, profits)
+    plt.bar(labels, profits, color=['gray', 'blue']) # Added color for clarity
     plt.title("Net Profit Comparison")
-    plt.ylabel("Net Profit")
+    plt.ylabel("Net Profit ($)")
     plt.tight_layout()
-    plt.show()
-
+    
+    # If using Kedro-Viz or notebooks, plt.show() is fine. 
+    # If you want to save it as a Kedro artifact, you'll need to return the figure.
+    return plt.gcf()
 
 
 def log_business_metrics(
@@ -298,8 +352,8 @@ def log_business_metrics(
     Centralized MLflow logging node.
     """
 
-    mlflow.log_metric("model_net_profit", model_financials["net_profit"])
-    mlflow.log_metric("model_roi_annualized_pct", model_financials["roi_annualized_pct"])
+    mlflow.log_metric("model_net_profit", model_financials["models_net_profit"])
+    mlflow.log_metric("model_roi_annualized_pct", model_financials["models_roi_annualized_pct"])
 
     mlflow.log_metric("baseline_net_profit", baseline_financials["baseline_net_profit"])
     mlflow.log_metric(
@@ -314,7 +368,53 @@ def log_business_metrics(
 
 
 
+def create_business_dashboard(
+    model_financials: Dict, 
+    baseline_financials: Dict, 
+    risk_metrics: Dict
+):
+    """
+    Generates a 4-panel dashboard to explain the business value of the model.
+    """
+    # Set the style for a professional look
+    sns.set_theme(style="whitegrid")
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    fig.suptitle('Loan Model\'s Business Impact Dashboard', fontsize=20, fontweight='bold')
 
+    # 1. Profit Comparison (Top Left)
+    labels = ['Baseline (Approve All)', 'ML Model']
+    profits = [baseline_financials["baseline_net_profit"], model_financials["models_net_profit"]]
+    sns.barplot(x=labels, y=profits, ax=axes[0, 0], palette=['#A9A9A9', '#2E8B57'])
+    axes[0, 0].set_title('Net Profit Comparison ($)', fontsize=14)
+    axes[0, 0].set_ylabel('Profit')
+
+    # 2. Credit Losses (Top Right)
+    losses = [baseline_financials["baselien_credit_losses"], model_financials["models_credit_losses"]]
+    sns.barplot(x=labels, y=losses, ax=axes[0, 1], palette=['#FF6347', '#CD5C5C'])
+    axes[0, 1].set_title('Credit Losses (Lower is Better)', fontsize=14)
+    axes[0, 1].set_ylabel('Loss Amount ($)')
+
+    # 3. ROI Comparison (Bottom Left)
+    roi = [baseline_financials["baseline_roi_annualized_pct"], model_financials["models_roi_annualized_pct"]]
+    sns.barplot(x=labels, y=roi, ax=axes[1, 0], palette='viridis')
+    axes[1, 0].set_title('Annualized ROI (%)', fontsize=14)
+    axes[1, 0].set_ylabel('Percentage')
+
+    # 4. Portfolio Composition (Bottom Right)
+    # Showing Approved vs Rejected in the Model
+    comp_labels = ['Approved Good', 'Approved Bad']
+    comp_values = [risk_metrics["approved_good"], risk_metrics["approved_bad"]]
+    axes[1, 1].pie(comp_values, labels=comp_labels, autopct='%1.1f%%', colors=['#4CAF50', '#F44336'], startangle=140)
+    axes[1, 1].set_title('Model-Approved Portfolio Risk', fontsize=14)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    
+    # Save and Log to MLflow
+    plot_path = "business_dashboard.png"
+    plt.savefig(plot_path)
+    #mlflow.log_artifact(plot_path)
+    
+    return fig
 
 
 
@@ -427,7 +527,7 @@ def calculate_business_impact(y_test, y_pred,  loan_amt_test):
     
     Key improvements:
     1. Time-value adjusted ROI
-    2. Separate performing vs defaulted loan economics
+    2. Separate performing vs defaulted loan paramsomics
     3. Multiple ROI scenarios (best case, expected, worst case)
     4. Comparison with baseline (approve all) strategy
     """
@@ -538,7 +638,7 @@ def calculate_business_impact(y_test, y_pred,  loan_amt_test):
         default_roi = 0
         default_partial_interest = 0
     
-    # ========== COMBINED PORTFOLIO ECONOMICS ==========
+    # ========== COMBINED PORTFOLIO paramsOMICS ==========
     print(f"\n{'='*80}")
     print(f"💼 COMBINED PORTFOLIO (3-YEAR PROJECTION)")
     print(f"{'='*80}")
@@ -746,7 +846,7 @@ def visualize_business_metrics(enhanced_business_report):
         'loss': '#e74c3c',
         'neutral': '#3498db',
         'warning': '#f39c12',
-        'secondary': '#95a5a6',
+        'sparamsdary': '#95a5a6',
         'dark': '#2c3e50',
         'light_green': '#a8e6cf',
         'light_red': '#ffaaa5',
@@ -846,7 +946,7 @@ def visualize_business_metrics(enhanced_business_report):
     ]
     roi_colors = [
         colors['profit'] if roi_values[0] > 0 else colors['loss'],
-        colors['loss'] if roi_values[1] < 0 else colors['secondary'],
+        colors['loss'] if roi_values[1] < 0 else colors['sparamsdary'],
         colors['profit']
     ]
     
@@ -1185,7 +1285,7 @@ def visualize_business_metrics(enhanced_business_report):
                   f"Model: XGBoost Classifier")
     fig.text(0.5, 0.01, footer_text,
              ha='center', va='bottom', fontsize=9, style='italic',
-             bbox=dict(boxstyle='round,pad=0.5', facecolor=colors['secondary'], 
+             bbox=dict(boxstyle='round,pad=0.5', facecolor=colors['sparamsdary'], 
                       alpha=0.2, edgecolor='none'))
     
     # Log to MLflow if active

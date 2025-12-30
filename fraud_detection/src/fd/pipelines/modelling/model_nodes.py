@@ -61,7 +61,9 @@ def train_logistic_regression(
     print("Training Logistic Regression...")
     lr_model = LogisticRegression(**lr_params)
     lr_model.fit(X_train, y_train)
-    
+    print(f"classes to predict :{lr_model.classes_}")
+    positive_class_index = list(lr_model.classes_).index(1)
+    print(f"positive class :{positive_class_index}")
     # Quick validation score on training data
     train_pred = lr_model.predict(X_train)
     train_accuracy = accuracy_score(y_train, train_pred)
@@ -85,7 +87,7 @@ def train_logistic_regression(
         
     #run_id = run_name.info.run_id
     #print(f"✅ Logistic Regression trained | Run ID: {run_id}")
-    print(f"   Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
+    print(f" Train Accuracy: {train_accuracy:.4f} | Train AUC: {train_auc:.4f}\n")
     
     return lr_model #, run_id
 
@@ -224,7 +226,7 @@ def train_xgboost(
         # Handle early stopping if needed
         if 'early_stopping_rounds' in xgb_params:
             X_train_fit, X_val, y_train_fit, y_val = train_test_split(
-                X_train, y_train, test_size=0.1, random_state=42
+                X_train, y_train, test_size=0.2, random_state=42
             )
             xgb_model.fit(
                 X_train_fit, y_train_fit,

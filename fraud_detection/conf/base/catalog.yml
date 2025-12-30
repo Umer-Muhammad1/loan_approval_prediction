@@ -371,16 +371,45 @@ bussiness_metrics:
 
 
 portfolio_segments:
-  type: MemoryDataset
+  type: json.JSONDataset
+  filepath: data/08_reporting/portfolio_segments.json
 
 loan_economics:
   type: MemoryDataset
 
 model_financials:
-  type: MemoryDataset
+  type: json.JSONDataset
+  filepath: data/08_reporting/model_financials.json
+
+
+
 
 baseline_financials:
-  type: MemoryDataset
+  type: json.JSONDataset
+  filepath: data/08_reporting/baseline_financials.json
+
+
+
 
 risk_metrics:
-  type: MemoryDataset
+  type: json.JSONDataset
+  filepath: data/08_reporting/risk_metrics.json
+
+
+#plot_summary:
+#    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#    dataset:
+#      type: matplotlib.MatplotlibDataset
+#      filepath: data/temp/fraud_detection/plot_summary.png
+#      save_args:
+#        format: png
+#        dpi: 300
+
+business_dashboard_plot:
+    type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+    dataset:
+      type: matplotlib.MatplotlibDataset
+      filepath: data/temp/fraud_detection/business_dashboard_plot.png
+      save_args:
+        format: png
+        dpi: 300
