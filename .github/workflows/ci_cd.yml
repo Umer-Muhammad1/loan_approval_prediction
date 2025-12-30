@@ -15,7 +15,7 @@ jobs:
     defaults:
       run:
         working-directory: ./fraud_detection
-    steps:
+steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -37,8 +37,10 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: pytest src/tests/ -v 
+          # This ensures 'src' and 'app' can be found
+          PYTHONPATH: ${{ github.workspace }}/fraud_detection:${{ github.workspace }}/fraud_detection/src
+        # Using 'python -m pytest' is the most robust way to handle imports in CI
+        run: python -m pytest src/tests/ -v --cov=src --cov-report=xml
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
