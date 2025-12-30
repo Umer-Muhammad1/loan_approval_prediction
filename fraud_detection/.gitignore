@@ -168,3 +168,5 @@ venv.bak/
 
 # mlflow local runs
 mlruns/*
+fraud_detection.src.tests.test_run
+fraud_detection/src/tests/test_api
