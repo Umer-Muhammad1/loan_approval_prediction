@@ -2,8 +2,8 @@
 # KEDRO PROJECT
 
 # ignore all local configuration
-!conf/local/.gitkeep
-conf/docker
+
+
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
 conf/**
