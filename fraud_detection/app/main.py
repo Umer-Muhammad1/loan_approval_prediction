@@ -33,7 +33,6 @@ EXPECTED_FEATURES = [
     'cb_person_default_on_file_Y', 'person_age', 'person_income', 'person_emp_length', 
     'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length'
 ]
-
 def load_production_artifacts():
     """
     Downloads and loads the model, scaler, and encoder into memory.
@@ -63,13 +62,14 @@ def load_production_artifacts():
         logger.info(f"📦 Run ID detected: {run_id}. Downloading preprocessors...")
 
         # 2. Download and Unpickle Scaler and Encoder
-        scaler_path = client.download_artifacts(run_id, "scaler.pkl")
-        encoder_path = client.download_artifacts(run_id, "encoder.pkl")
-        
-        with open(scaler_path, "rb") as f:
-            scaler = pickle.load(f)
-        with open(encoder_path, "rb") as f:
-            encoder = pickle.load(f)
+        try:
+            with open("data/06_models/scaler.pkl", "rb") as f:
+                scaler = pickle.load(f)
+            with open("data/06_models/encoder.pkl", "rb") as f:
+                encoder = pickle.load(f)
+            print("✅ Scaler and Encoder loaded successfully!")
+        except Exception as e:
+            print(f"❌ Failed to load preprocessing artifacts: {e}")
             
         logger.info("✅ All artifacts successfully synced and loaded into memory.")
 

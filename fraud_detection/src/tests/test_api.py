@@ -81,4 +81,4 @@ def test_health_check_ready(mock_artifacts):
     # Updated: Checking for 'ready' instead of 'healthy'
     assert response.json()["status"] == "ready"
 
-#python -m pytest --cov=src/fd --cov-report=term-missing tests/
+#python -m pytest --cov=src/fd --cov-report=term-missing src/tests/
