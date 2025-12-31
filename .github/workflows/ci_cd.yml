@@ -69,6 +69,11 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Verify Kedro Environment
+        run: |
+          python -c "from kedro.framework.project import settings; print(f'Active Environment: {settings.CONF_SOURCE}')"
+          # Or simply check if KEDRO_ENV is set
+          echo "KEDRO_ENV is: $KEDRO_ENV"
 
       - name: Validate data schema
         run: |
