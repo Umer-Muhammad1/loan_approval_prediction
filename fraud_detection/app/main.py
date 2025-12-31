@@ -2,14 +2,12 @@ import os
 import pickle
 import mlflow
 import pandas as pd
+import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from app.schemas import LoanApplication
-
-# --- Logging Setup ---
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # --- Configuration ---
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow-service:5000")
@@ -17,13 +15,16 @@ MODEL_NAME = os.getenv("MODEL_NAME", "loan_xgb_model")
 MODEL_ALIAS = os.getenv("MODEL_ALIAS", "production")
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-
-# Global variables
+# --- Logging Setup ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+# Global variables for artifacts (initialized as None)
 model = None
 scaler = None
 encoder = None
 DECISION_THRESHOLD = 0.5
 
+# Exact order expected by the XGBoost model
 EXPECTED_FEATURES = [
     'person_home_ownership_MORTGAGE', 'person_home_ownership_OTHER', 'person_home_ownership_OWN', 
     'person_home_ownership_RENT', 'loan_intent_DEBTCONSOLIDATION', 'loan_intent_EDUCATION', 
@@ -33,50 +34,43 @@ EXPECTED_FEATURES = [
     'cb_person_default_on_file_Y', 'person_age', 'person_income', 'person_emp_length', 
     'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length'
 ]
+
 def load_production_artifacts():
     """
-    Downloads and loads the model, scaler, and encoder into memory.
+    Loads the model from MLflow but loads scaler/encoder from fixed local paths.
     """
     global model, scaler, encoder
     client = mlflow.tracking.MlflowClient()
 
     try:
-        # 1. Load Model (Try Alias -> Fallback to Latest)
+        # 1. Load Model from MLflow
         try:
             model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-            logger.info(f"📡 Attempting to load primary model: {model_uri}")
+            logger.info(f"📡 Attempting to load model: {model_uri}")
             model = mlflow.pyfunc.load_model(model_uri)
-            model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
-            logger.info(f"✅ Loaded model using alias: {MODEL_ALIAS}")
         except Exception as alias_err:
-            logger.warning(f"⚠️ Alias '{MODEL_ALIAS}' not found: {alias_err}. Falling back to latest...")
+            logger.warning(f"⚠️ Alias not found, falling back to latest...")
             model_uri = f"models:/{MODEL_NAME}/latest"
             model = mlflow.pyfunc.load_model(model_uri)
-            versions = client.get_latest_versions(MODEL_NAME)
-            if not versions:
-                raise RuntimeError(f"No versions found for model name '{MODEL_NAME}'")
-            model_version = versions[0]
-            logger.info(f"✅ Loaded latest version (Version {model_version.version})")
 
-        run_id = model_version.run_id
-        logger.info(f"📦 Run ID detected: {run_id}. Downloading preprocessors...")
+        # 2. Load Scaler and Encoder from manual local paths
+        scaler_path = "data/06_models/scaler.pkl"
+        encoder_path = "data/06_models/encoder.pkl"
 
-        # 2. Download and Unpickle Scaler and Encoder
         try:
-            with open("data/06_models/scaler.pkl", "rb") as f:
+            with open(scaler_path, "rb") as f:
                 scaler = pickle.load(f)
-            with open("data/06_models/encoder.pkl", "rb") as f:
+            with open(encoder_path, "rb") as f:
                 encoder = pickle.load(f)
-            print("✅ Scaler and Encoder loaded successfully!")
-        except Exception as e:
-            print(f"❌ Failed to load preprocessing artifacts: {e}")
-            
-        logger.info("✅ All artifacts successfully synced and loaded into memory.")
+            logger.info(f"✅ Preprocessors loaded locally from data/06_models/")
+        except FileNotFoundError as e:
+            logger.error(f"❌ Local artifact file not found: {e}")
+            raise
+
+        logger.info("✅ All artifacts successfully loaded into memory.")
 
     except Exception as e:
         logger.error(f"❌ Critical Error during artifact sync: {str(e)}")
-        # We don't raise here so the container doesn't crash loop, 
-        # allowing you to exec in and debug or check /health.
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,22 +83,23 @@ async def lifespan(app: FastAPI):
     load_production_artifacts()
     yield
     logger.info("👋 Shutting down API...")
-
 app = FastAPI(title="Loan Status Predictor", lifespan=lifespan)
 
 @app.post("/predict")
-async def predict(payload: LoanApplication):
+def predict(payload: LoanApplication):
+    # Check if artifacts are ready
     if model is None or scaler is None or encoder is None:
         raise HTTPException(
             status_code=503, 
-            detail="Model is still loading or failed to initialize. Check logs."
+            detail="Model is still loading or failed to initialize. Please try again in a few seconds."
         )
 
     try:
-        # Prepare Data
+        # Pydantic V2 processing
         data_dict = payload.model_dump()
         df = pd.DataFrame([data_dict])
 
+        # --- Preprocessing ---
         cat_cols = ["person_home_ownership", "loan_intent", "loan_grade", "cb_person_default_on_file"]
         stand_cols = ["person_age", "person_income", "person_emp_length", "loan_amnt", "loan_int_rate", "loan_percent_income", "cb_person_cred_hist_length"]
 
@@ -118,40 +113,42 @@ async def predict(payload: LoanApplication):
         # 2. Scaling
         df_encoded[stand_cols] = scaler.transform(df_encoded[stand_cols])
 
-        # 3. Alignment (Ensures XGBoost gets columns in the right order)
+        # 3. Alignment
         df_final = df_encoded[EXPECTED_FEATURES]
 
-        # 4. Inference
-        # Handling different model flavors (some pyfunc models return ndarray, others have predict_proba)
-        # Assuming XGBoost with probability output enabled
-        proba_approve = model.predict(df_final)
-        
-        # If model.predict returns the probability directly:
-        val = float(proba_approve[0])
-        decision = int(val >= DECISION_THRESHOLD)
+        # --- Inference ---
+        #prediction = model.predict(df_final)
+        positive_class_index = list(model.classes_).index(1)
+        proba_approve = model.predict_proba(df_final)[0, positive_class_index]
+        # Threshold-based decision
+        decision = int(proba_approve >= DECISION_THRESHOLD)
 
         return {
-            "prediction": decision,
+            "prediction": decision,  # 0 = Rejected, 1 = Approved
             "status": "Approved" if decision == 1 else "Rejected",
-            "confidence": val,
+            "confidence": float(proba_approve),
             "threshold": DECISION_THRESHOLD,
             "model_info": {
                 "name": MODEL_NAME,
-                "version_run_id": getattr(model, "metadata", {}).get("run_id", "unknown")
+                "alias": MODEL_ALIAS,
+                "positive_class": 1,
+                "business_meaning": "1=Approved, 0=Rejected"
             }
         }
     except Exception as e:
-        logger.error(f"Inference error: {e}")
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")
 
 @app.get("/health")
 def health():
+    """
+    Kubernetes Readiness Probe hits this.
+    Returns 200 OK even if loading, but details specify readiness.
+    """
     ready = all([model is not None, scaler is not None, encoder is not None])
     return {
         "status": "ready" if ready else "initializing",
         "model_loaded": model is not None,
-        "preprocessors_loaded": all([scaler is not None, encoder is not None]),
-        "mlflow_uri": MLFLOW_TRACKING_URI
+        "preprocessors_loaded": all([scaler is not None, encoder is not None])
     }
 
 @app.get("/")
