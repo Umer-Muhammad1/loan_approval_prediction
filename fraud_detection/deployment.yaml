@@ -123,4 +123,4 @@ spec:
 # kubectl delete service service_name
 # kubectl delete pod pod_name
 # kubectl logs -l app=loan-api -f  #to see all the logs
-# kubectl rollout restart deployment/loan-api-deployment
+# kubectl rollout restart deployment dep_name

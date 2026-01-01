@@ -19,7 +19,6 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 model = None
 scaler = None
 encoder = None
-DECISION_THRESHOLD = 0.5
 
 # Exact order expected by the XGBoost model
 EXPECTED_FEATURES = [
@@ -38,34 +37,22 @@ def load_production_artifacts():
     This runs in a background thread to prevent blocking the event loop.
     """
     global model, scaler, encoder
-    client = mlflow.tracking.MlflowClient()
-
     try:
-        # 1. Primary Attempt: Use Alias
-        try:
-            model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-            print(f"📡 Attempting to load primary model: {model_uri}")
-            model = mlflow.pyfunc.load_model(model_uri)
-            model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
-            print(f"✅ Loaded model using alias: {MODEL_ALIAS}")
+        # 1. Load Model
+        model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
+        print(f"📡 Syncing artifacts from MLflow: {model_uri}")
+        # Note: mlflow.pyfunc.load_model is heavy and blocks
+        model = mlflow.pyfunc.load_model(model_uri)
         
-        # 2. Fallback Attempt: Use Latest Version
-        except Exception as alias_err:
-            print(f"⚠️ Alias '{MODEL_ALIAS}' not found. Falling back to latest version...")
-            model_uri = f"models:/{MODEL_NAME}/latest"
-            model = mlflow.pyfunc.load_model(model_uri)
-            
-            # Get the version metadata for the 'latest' model to find the correct Run ID
-            # In MLflow, the latest version is usually the one with the highest version number
-            versions = client.get_latest_versions(MODEL_NAME)
-            model_version = versions[0] # The first item is the most recent
-            print(f"✅ Loaded latest version (Version {model_version.version})")
+        # 2. Extract Run ID for preprocessing artifacts
+        client = mlflow.tracking.MlflowClient()
+        model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
         run_id = model_version.run_id
         
         # 3. Download Scaler and Encoder
         print(f"📦 Run ID detected: {run_id}. Downloading preprocessors...")
-        scaler_path = client.download_artifacts(run_id, "scaler.pkl")
-        encoder_path = client.download_artifacts(run_id, "encoder.pkl")
+        scaler_path = "data\06_models\scaler.pkl"
+        encoder_path =  "data\06_models\encoder.pkl"
         
         with open(scaler_path, "rb") as f:
             scaler = pickle.load(f)
@@ -73,8 +60,6 @@ def load_production_artifacts():
             encoder = pickle.load(f)
             
         print("✅ All artifacts successfully synced and loaded into memory.")
-
-        
     except Exception as e:
         print(f"❌ Critical Error during artifact sync: {e}")
         # We don't raise here to keep the process alive for debugging, 
@@ -128,23 +113,14 @@ def predict(payload: LoanApplication):
         df_final = df_encoded[EXPECTED_FEATURES]
 
         # --- Inference ---
-        #prediction = model.predict(df_final)
-        positive_class_index = list(model.classes_).index(1)
-        proba_approve = model.predict_proba(df_final)[0, positive_class_index]
-        # Threshold-based decision
-        decision = int(proba_approve >= DECISION_THRESHOLD)
+        prediction = model.predict(df_final)
+        probability = model.predict_proba(df_final).max() if hasattr(model, "predict_proba") else None
 
         return {
-            "prediction": decision,  # 0 = Rejected, 1 = Approved
-            "status": "Approved" if decision == 1 else "Rejected",
-            "confidence": float(proba_approve),
-            "threshold": DECISION_THRESHOLD,
-            "model_info": {
-                "name": MODEL_NAME,
-                "alias": MODEL_ALIAS,
-                "positive_class": 1,
-                "business_meaning": "1=Approved, 0=Rejected"
-            }
+            "prediction": int(prediction[0]),
+            "status": "Approved" if int(prediction[0]) == 1 else "Rejected",
+            "confidence": float(probability) if probability else None,
+            "model_info": {"name": MODEL_NAME, "alias": MODEL_ALIAS}
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")
