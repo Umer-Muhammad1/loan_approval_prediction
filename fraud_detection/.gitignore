@@ -169,3 +169,5 @@ venv.bak/
 mlruns/*
 fraud_detection.src.tests.test_run
 fraud_detection/src/tests/test_api
+
+azure_deplyment_steps.md
