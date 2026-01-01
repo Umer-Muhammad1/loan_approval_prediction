@@ -109,12 +109,19 @@ During deployment, Kubernetes pulls the latest image from DockerHub, and the Ked
 **Technology Stack**
 
 Pipeline Orchestration: Kedro
+
 Data Validation: Great Expectations
+
 Experiment Tracking & Registry: MLflow
+
 API Service: FastAPI
+
 Containerization: Docker, Docker Compose
+
 CI/CD: GitHub Actions
+
 Deployment: Kubernetes
+
 Version Control: Git
 
 
