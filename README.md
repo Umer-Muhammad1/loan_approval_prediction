@@ -7,77 +7,135 @@ This project is a full end-to-end MLOps system for predicting loan approval stat
 
 The system covers the complete ML lifecycle:
 
-Data ingestion and validation
+- Data ingestion and validation
 
-Feature engineering and model training
+- Feature engineering and model training
 
-Experiment tracking and model registry
+- Experiment tracking and model registry
 
-Containerization and CI/CD
+- Containerization and CI/CD
 
-Kubernetes-based depl'oyment
+- Kubernetes-based deployment
 
-Model serving via FastAPI
+- Model serving via FastAPI
 
 This repository is designed to reflect real-world MLOps workflows, not notebook-driven experimentation.
 
-2. **Key Objectives**
+2. **High-Level Architecture**
 
-Build reproducible ML pipelines using Kedro
+The project follows a modular, decoupled architecture where training, model registry, and inference are independently managed.
 
-Enforce data quality using Great Expectations
+End-to-end flow:
 
-Track experiments and manage models with MLflow
+- Data is ingested and validated using Kedro pipelines
 
-Automate builds and deployments using GitHub Actions
+- Data quality checks and type casting prevent silent data issues
 
-Package services using Docker & Docker Compose
+- Models are trained and logged to MLflow (tracking + registry)
 
-Deploy training and inference services on Kubernetes
+- CI pipeline builds and pushes Docker images to DockerHub
 
-Serve predictions through a FastAPI application
+- Kubernetes pulls the latest images and deploys services
 
-Maintain clear separation between training, registry, and serving
+- FastAPI dynamically loads the production model from MLflow Registry
 
-3. System Architecture
+Training and inference are intentionally separated to mirror real production systems. Below is the brief description of each step
 
-4. **Technology Stack**
-- Machine Learning & Pipelines
 
-- Python
+**Data Validation & Quality Control**
 
-- Kedro – modular, reproducible ML pipelines
+To mitigate common data reliability issues, the pipeline integrates data validation and type enforcement:
 
-- Scikit-learn model training
+- Great Expectations validates schema, ranges, and constraints
 
-- Data Quality & Validation
+- Explicit type-casting node ensure consistent feature types
 
-- Great Expectations – schema validation and data quality checks
+- Validation failures stop the pipeline early
 
-- Explicit type casting nodes to prevent silent data issues
+- Prevents silent training-serving skew
 
-- Experiment Tracking & Model Management
+These checks are executed as part of the Kedro pipeline before model training.
 
-- MLflow Tracking – experiments and metrics
- 
-- MLflow Model Registry – versioning and lifecycle management
- 
-- Model promotion using Production alias
- 
-- API & Serving
-- 
-- FastAPI – model inference service
+**Machine Learning Pipeline**
+1. Training & Experimentation 
+Pipelines are orchestrated using Kedro, includes EDA, modelling, and bussiness metrics. Conda environments ensure reproducible execution.
 
-- Model loaded at application startup from MLflow registry
+2. Experiment Tracking & Model Registry
 
-- DevOps & Infrastructure
+MLflow Tracking logs parameters, metrics, and artifacts. Models are registered and versioned in MLflow Model Registry. Enables controlled promotion (using aliases) of models to production stages.
 
-- Docker – containerization
+**CI/CD Pipeline**
 
-- Docker Compose – local multi-service setup
+The project uses GitHub Actions for continuous integration:
 
-- GitHub Actions – CI pipeline (build, test, push images)
+- Triggered on each push to the repository
 
-- Docker Hub – image registry
+- Builds Docker images for training and inference services
 
-- Kubernetes – orchestration and deployment
+- Pushes versioned images to DockerHub
+
+- Kubernetes automatically pulls the latest images during deployment
+
+This ensures consistent and automated delivery from code to production.
+
+
+**Containerization & Deployment**
+
+i. *Docker*
+
+All services are containerized for environmental consistency
+
+The same images are used locally and in Kubernetes
+
+ii. *Kubernetes*
+
+The cluster runs two main services:
+
+- MLflow API: experiment tracking and model registry
+
+- FastAPI Inference Service: serves predictions using the registered model
+
+During deployment, Kubernetes pulls the latest image from DockerHub, and the Kedro experiments are executed inside the cluster. FastAPI loads the production model directly from MLflow Registry.
+
+
+**Monitoring & Metrics**
+
+- Model performance metrics are logged and tracked in MLflow
+
+- Business-level metrics are computed via dedicated Kedro pipelines
+
+- Enables traceability between data, experiments, and deployed models
+
+**Technology Stack**
+
+Pipeline Orchestration: Kedro
+Data Validation: Great Expectations
+Experiment Tracking & Registry: MLflow
+API Service: FastAPI
+Containerization: Docker, Docker Compose
+CI/CD: GitHub Actions
+Deployment: Kubernetes
+Version Control: Git
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
