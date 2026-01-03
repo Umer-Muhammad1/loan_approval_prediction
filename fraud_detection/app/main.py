@@ -137,7 +137,7 @@ async def predict(payload: LoanApplication):
             "threshold": DECISION_THRESHOLD,
             "model_info": {
                 "name": MODEL_NAME,
-                "version_run_id": getattr(model, "metadata", {}).get("run_id", "unknown")
+                "version_run_id": getattr(model.metadata, "run_id", "unknown") if hasattr(model, "metadata") else "unknown"
             }
         }
     except Exception as e:
