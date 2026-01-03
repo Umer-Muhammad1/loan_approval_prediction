@@ -2,11 +2,12 @@
 # KEDRO PROJECT
 
 # ignore all local configuration
-
+conf/local/**
+!conf/local/.gitkeep
 
 # ignore potentially sensitive credentials files
 conf/**/*credentials*
-conf/**
+
 # ignore everything in the following folders
 data/**
 notebooks/**
@@ -17,8 +18,6 @@ notebooks/**
 # also keep all .gitkeep files
 !.gitkeep
 !data/06_models/encoder.pkl
-!data/01_raw/raw_loan_prediction.csv
-!data/05_model_input/X_test_scaled.csv
 !data/06_models/scaler.pkl
 # also keep the example dataset
 !data/01_raw/companies.csv
@@ -127,7 +126,7 @@ local_settings.py
 # Flask stuff:
 instance/
 .webassets-cache
-results
+
 # Scrapy stuff:
 .scrapy
 
@@ -164,10 +163,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-
 # mlflow local runs
 mlruns/*
-fraud_detection.src.tests.test_run
-fraud_detection/src/tests/test_api
-
-azure_deplyment_steps.md

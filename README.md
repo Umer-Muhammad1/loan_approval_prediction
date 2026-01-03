@@ -81,13 +81,13 @@ This ensures consistent and automated delivery from code to production.
 
 **Containerization & Deployment**
 
-i. *Docker*
+1. **Docker**
 
 All services are containerized for environmental consistency
 
 The same images are used locally and in Kubernetes
 
-ii. *Kubernetes*
+2. **Kubernetes**
 
 The cluster runs two main services:
 

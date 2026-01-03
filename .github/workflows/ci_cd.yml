@@ -2,7 +2,7 @@ name: CI_CD Pipeline
 
 on:
   push:
-    branches: [ main, k8 ]
+    branches: [ main, develop ]
     tags: 
       - 'v*' # This triggers the workflow for any tag starting with 'v' (e.g., v1.0.1)
   pull_request:
@@ -40,7 +40,7 @@ jobs:
           # This ensures 'src' and 'app' can be found
           PYTHONPATH: ${{ github.workspace }}/fraud_detection:${{ github.workspace }}/fraud_detection/src
         # Using 'python -m pytest' is the most robust way to handle imports in CI
-        run: python -m pytest src/tests/ -v --cov=src --cov-report=xml
+        run: python -m pytest tests/ -v --cov=src --cov-report=xml
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
