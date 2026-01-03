@@ -31,39 +31,35 @@ EXPECTED_FEATURES = [
     'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length'
 ]
 
+from fastapi import Response
+
 def load_production_artifacts():
-    """
-    Syncs the model and preprocessors from the MLflow Registry.
-    This runs in a background thread to prevent blocking the event loop.
-    """
     global model, scaler, encoder
     try:
-        # 1. Load Model
+        # 1. Load the Model
         model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-        print(f"📡 Syncing artifacts from MLflow: {model_uri}")
-        # Note: mlflow.pyfunc.load_model is heavy and blocks
+        print(f"📡 Downloading model: {model_uri}")
         model = mlflow.pyfunc.load_model(model_uri)
         
-        # 2. Extract Run ID for preprocessing artifacts
+        # 2. Use MLflow Client to download pickeled artifacts
         client = mlflow.tracking.MlflowClient()
         model_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
         run_id = model_version.run_id
         
-        # 3. Download Scaler and Encoder
-        print(f"📦 Run ID detected: {run_id}. Downloading preprocessors...")
-        scaler_path = "data\06_models\scaler.pkl"
-        encoder_path =  "data\06_models\encoder.pkl"
+        # Download to local temp path (Linux compatible)
+        print(f"📦 Downloading preprocessors from run: {run_id}")
+        # 'download_artifacts' returns the local path where MLflow saved the file
+        local_scaler = client.download_artifacts(run_id, "scaler.pkl")
+        local_encoder = client.download_artifacts(run_id, "encoder.pkl")
         
-        with open(scaler_path, "rb") as f:
+        with open(local_scaler, "rb") as f:
             scaler = pickle.load(f)
-        with open(encoder_path, "rb") as f:
+        with open(local_encoder, "rb") as f:
             encoder = pickle.load(f)
             
-        print("✅ All artifacts successfully synced and loaded into memory.")
+        print("✅ Success: Artifacts loaded into memory.")
     except Exception as e:
-        print(f"❌ Critical Error during artifact sync: {e}")
-        # We don't raise here to keep the process alive for debugging, 
-        # but the /health endpoint will reflect the failure.
+        print(f"❌ Error: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -126,17 +122,12 @@ def predict(payload: LoanApplication):
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")
 
 @app.get("/health")
-def health():
-    """
-    Kubernetes Readiness Probe hits this.
-    Returns 200 OK even if loading, but details specify readiness.
-    """
+def health(response: Response):
     ready = all([model is not None, scaler is not None, encoder is not None])
-    return {
-        "status": "ready" if ready else "initializing",
-        "model_loaded": model is not None,
-        "preprocessors_loaded": all([scaler is not None, encoder is not None])
-    }
+    if not ready:
+        response.status_code = 503 # Tells K8s 'I am not ready yet'
+        return {"status": "initializing"}
+    return {"status": "ready"}
 
 @app.get("/")
 def home():
