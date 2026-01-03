@@ -17,21 +17,30 @@ spec:
     spec:
       containers:
         - name: mlflow-server
-          image: mumerarif/kedro_pipelines:latest # Standardized tag
-          # OVERRIDE: Tell this container to be an MLflow server, not an API
+          image: mumerarif/kedro_pipelines:latest
           command: ["mlflow"]
           args:
             - "server"
             - "--host"
             - "0.0.0.0"
+            - "--port"
+            - "5000"
             - "--backend-store-uri"
-            - "sqlite:///mlflow-data/mlflow.db"
+            - "sqlite:///mlflow-data/mlflow.db" # Database on PVC
+            - "--default-artifact-root"
+            - "mlflow-artifacts:/"         # <--- CHANGE THIS
             - "--artifacts-destination"
-            - "/mlflow-data/artifacts" # CHANGED: Now inside the PVC mount
+            - "/mlflow-data/artifacts"
             - "--serve-artifacts"
-            - "--disabled-auth"
-            - --allowed-hosts
+            - "--allowed-hosts"
             - "*"
+          volumeMounts:
+            - name: mlflow-storage
+              mountPath: /mlflow-data          # This matches the volumes section
+      volumes:
+        - name: mlflow-storage
+          persistentVolumeClaim:
+            claimName: mlflow-pvc1
         # env:
         #   # This tells the underlying server to ignore the Host header check
         #   - name: MLFLOW_GUNICORN_OPTS
@@ -44,7 +53,7 @@ spec:
       volumes:
         - name: mlflow-storage
           persistentVolumeClaim:
-            claimName: mlflow-pvc
+            claimName: mlflow-pvc1
 ---
 # 2. MLFLOW INTERNAL SERVICE
 apiVersion: v1

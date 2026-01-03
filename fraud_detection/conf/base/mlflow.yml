@@ -35,9 +35,9 @@ tracking:
     pipelines: []
 
   experiment:
-    name: fraud_detection
-    create_experiment_kwargs: # will be used only if the experiment does not exist yet and is created.
-      artifact_location: null # enable to specify an artifact location for the experiment different than the global one for the mlflow server
+    name: fraud_detection_v2  # New name to force new metadata
+    create_experiment_kwargs:
+      artifact_location: "mlflow-artifacts:/" # Force the proxy # enable to specify an artifact location for the experiment different than the global one for the mlflow server
       tags: null  # a dict of tags for the experiment
     restore_if_deleted: True  # if the experiment`name` was previously deleted experiment, should we restore it?
 
