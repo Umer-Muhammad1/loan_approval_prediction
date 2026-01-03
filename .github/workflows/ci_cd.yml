@@ -40,7 +40,7 @@ jobs:
           # This ensures 'src' and 'app' can be found
           PYTHONPATH: ${{ github.workspace }}/fraud_detection:${{ github.workspace }}/fraud_detection/src
         # Using 'python -m pytest' is the most robust way to handle imports in CI
-        run: python -m pytest tests/ -v --cov=src --cov-report=xml
+        run: python -m pytest src/tests/ -v --cov=src --cov-report=xml
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -75,10 +75,10 @@ jobs:
       #    # Or simply check if KEDRO_ENV is set
        #   echo "KEDRO_ENV is: $KEDRO_ENV"
 
-      #- name: Validate data schema
-      #  run: |
+      - name: Validate data schema
+        run: |
           # Use the 'to_nodes' or 'pipeline' flag to run only validation
-     #     kedro run --pipeline=data_engineering --nodes=data_validation_node
+          kedro run --pipeline=data_engineering --nodes=data_validation_node
 
   build-and-push:
     runs-on: ubuntu-latest

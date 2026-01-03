@@ -133,8 +133,8 @@ async def predict(payload: LoanApplication):
         return {
             "prediction": decision,
             "status": "Approved" if decision == 1 else "Rejected",
-            "confidence": val,
-            "threshold": DECISION_THRESHOLD,
+            #"confidence": val,
+            #"threshold": DECISION_THRESHOLD,
             "model_info": {
                 "name": MODEL_NAME,
                 "version_run_id": getattr(model.metadata, "run_id", "unknown") if hasattr(model, "metadata") else "unknown"
