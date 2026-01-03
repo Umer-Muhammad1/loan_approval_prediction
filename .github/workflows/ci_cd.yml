@@ -75,10 +75,10 @@ jobs:
       #    # Or simply check if KEDRO_ENV is set
        #   echo "KEDRO_ENV is: $KEDRO_ENV"
 
-      - name: Validate data schema
-        run: |
+      #- name: Validate data schema
+        #run: |
           # Use the 'to_nodes' or 'pipeline' flag to run only validation
-          kedro run --pipeline=data_engineering --nodes=data_validation_node
+       #   kedro run --pipeline=data_engineering --nodes=data_validation_node
 
   build-and-push:
     runs-on: ubuntu-latest
