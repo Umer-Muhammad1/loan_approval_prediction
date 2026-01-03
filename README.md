@@ -1,9 +1,8 @@
 **End-to-End MLOps Project: Loan Status Prediction**
+---
 
 
-1. **Project Overview**
-
-This project is a full end-to-end MLOps system for predicting loan approval status using structured tabular data. The goal is not only to train an accurate model, but to demonstrate production-grade machine learning engineering practices including reproducibility, automation, deployment, and lifecycle management.
+A **production-grade MLOps system** that trains, validates, deploys, and serves a loan approval prediction model using Kubernetes, MLflow, and CI/CD automation. The goal is not only to train an accurate model, but to demonstrate production-grade machine learning engineering practices, including reproducibility, automation, deployment, and lifecycle management.
 
 The system covers the complete ML lifecycle:
 
@@ -19,9 +18,11 @@ The system covers the complete ML lifecycle:
 
 - Model serving via FastAPI
 
+
 This repository is designed to reflect real-world MLOps workflows, not notebook-driven experimentation.
 
-2. **High-Level Architecture**
+**High-Level Architecture**
+---
 
 The project follows a modular, decoupled architecture where training, model registry, and inference are independently managed.
 
@@ -39,10 +40,26 @@ End-to-end flow:
 
 - FastAPI dynamically loads the production model from MLflow Registry
 
-Training and inference are intentionally separated to mirror real production systems. Below is the brief description of each step
+Architecture
+    
+    A[Raw Loan Data] --> B[Data Validation using Great Expectations]
+    B --> C[Feature Engineering Kedro EDA Pipeline]
+    C --> D[Kedro Model Training Pipeline]
+
+    D --> E[MLflow Tracking]
+    E --> F[MLflow Model Registry]
+    F --> |Production Alias| G[FastAPI Inference Service]
+
+    G -->[Prediction API]
+
+
+
+Training and inference are intentionally separated to mirror real production systems. 
+
 
 
 **Data Validation & Quality Control**
+---
 
 To mitigate common data reliability issues, the pipeline integrates data validation and type enforcement:
 
@@ -56,16 +73,31 @@ To mitigate common data reliability issues, the pipeline integrates data validat
 
 These checks are executed as part of the Kedro pipeline before model training.
 
+
 **Machine Learning Pipeline**
+---
 1. Training & Experimentation 
 Pipelines are orchestrated using Kedro, includes EDA, modelling, and bussiness metrics. Conda environments ensure reproducible execution.
 
 2. Experiment Tracking & Model Registry
 
+
+flowchart LR
+
+    A[Ingest Data] --> B[Schema Validation]
+    B --> C[Range & Constraint Checks]
+    C --> D[Type Casting]
+    D --> E[EDA & Feature Engineering]
+    E --> F[Model Training]
+    F --> G[Evaluation & Business Metrics]
+    G -->|Log Params & Metrics| H[MLflow Tracking]
+
+    
 MLflow Tracking logs parameters, metrics, and artifacts. Models are registered and versioned in MLflow Model Registry. Enables controlled promotion (using aliases) of models to production stages.
 
-**CI/CD Pipeline**
 
+**CI/CD Pipeline**
+--- 
 The project uses GitHub Actions for continuous integration:
 
 - Triggered on each push to the repository
@@ -79,13 +111,14 @@ The project uses GitHub Actions for continuous integration:
 This ensures consistent and automated delivery from code to production.
 
 
-**Containerization & Deployment**
 
+**Containerization & Deployment**
+---
 1. **Docker**
 
-All services are containerized for environmental consistency
+- All services are containerized for environmental consistency
 
-The same images are used locally and in Kubernetes
+- The same images are used locally and in Kubernetes
 
 2. **Kubernetes**
 
@@ -98,7 +131,9 @@ The cluster runs two main services:
 During deployment, Kubernetes pulls the latest image from DockerHub, and the Kedro experiments are executed inside the cluster. FastAPI loads the production model directly from MLflow Registry.
 
 
+
 **Monitoring & Metrics**
+---
 
 - Model performance metrics are logged and tracked in MLflow
 
@@ -107,6 +142,7 @@ During deployment, Kubernetes pulls the latest image from DockerHub, and the Ked
 - Enables traceability between data, experiments, and deployed models
 
 **Technology Stack**
+---
 
 Pipeline Orchestration: Kedro
 
