@@ -107,10 +107,14 @@ This ensures a consistent and auditable deployment process.
 
 - Model performance metrics tracked in **MLflow**
 - Business metrics computed within the **Kedro** pipeline
-.*
 
 ---
 
+## Running the Project
+
+Detailed instructions for running the system locally and in Kubernetes can be found in [`fraud_detection/docs/running.md`](fraud_detection/docs/running.md).
+
+---
 ## Technology Stack
 
 - Orchestration: Kedro  
