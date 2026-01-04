@@ -1,47 +1,32 @@
-**End-to-End MLOps Project: Loan Status Prediction**
+# End-to-End MLOps System: Loan Status Prediction
+
+## Overview
+
+This repository implements a **production-grade end-to-end MLOps system** for loan approval prediction.  
+The project focuses on **engineering reliability, automation, and reproducibility**, rather than notebook-driven experimentation or model accuracy alone.
+
+The system mirrors real-world machine learning platforms by **decoupling training, model registry, and inference**, enforcing data quality checks, and deploying services through **containerized CI/CD workflows on Kubernetes**.
+
+
 ---
 
+## Project Goals
 
-A **production-grade MLOps system** that trains, validates, deploys, and serves a loan approval prediction model using Kubernetes, MLflow, and CI/CD automation. The goal is not only to train an accurate model, but to demonstrate production-grade machine learning engineering practices, including reproducibility, automation, deployment, and lifecycle management.
+- Demonstrate production-oriented MLOps practices
+- Enforce data validation and schema consistency
+- Enable reproducible, modular ML pipelines
+- Track experiments and manage model lifecycle
+- Deploy and serve models via automated workflows
 
-The system covers the complete ML lifecycle:
+**Non-goals:** state-of-the-art modeling, notebook experimentation, manual deployments.
 
-- Data ingestion and validation
-
-- Feature engineering and model training
-
-- Experiment tracking and model registry
-
-- Containerization and CI/CD
-
-- Kubernetes-based deployment
-
-- Model serving via FastAPI
-
-
-This repository is designed to reflect real-world MLOps workflows, not notebook-driven experimentation.
-
-**High-Level Architecture**
 ---
 
-The project follows a modular, decoupled architecture where training, model registry, and inference are independently managed.
+## Architecture Overview
 
-End-to-end flow:
+The system follows a **modular, decoupled architecture** where training and inference are independently managed.
 
-- Data is ingested and validated using Kedro pipelines
 
-- Data quality checks and type casting prevent silent data issues
-
-- Models are trained and logged to MLflow (tracking + registry)
-
-- CI pipeline builds and pushes Docker images to DockerHub
-
-- Kubernetes pulls the latest images and deploys services
-
-- FastAPI dynamically loads the production model from MLflow Registry
-
-Architecture
-    
     A[Raw Loan Data] --> B[Data Validation using Great Expectations]
     B --> C[Feature Engineering Kedro EDA Pipeline]
     C --> D[Kedro Model Training Pipeline]
@@ -53,132 +38,92 @@ Architecture
     G -->[Prediction API]
 
 
+### Design Principles
 
-Training and inference are intentionally separated to mirror real production systems. 
+- Training and inference are isolated
+- Model registry is the contract between pipelines and serving
+- Models are promoted via MLflow aliases
+- CI/CD governs the path from code to production
 
-
-
-**Data Validation & Quality Control**
 ---
 
-To mitigate common data reliability issues, the pipeline integrates data validation and type enforcement:
+## Data Validation & Quality Control
 
-- Great Expectations validates schema, ranges, and constraints
+Data validation is enforced **before feature engineering and training**:
 
-- Explicit type-casting node ensure consistent feature types
+- Schema, ranges, and types validated using **Great Expectations**
+- Explicit type casting ensures consistency
+- Validation failures halt the pipeline early
 
-- Validation failures stop the pipeline early
+This prevents schema drift, corrupted training data, and training–serving skew.
 
-- Prevents silent training-serving skew
-
-These checks are executed as part of the Kedro pipeline before model training.
-
-
-**Machine Learning Pipeline**
 ---
-1. Training & Experimentation 
-Pipelines are orchestrated using Kedro, includes EDA, modelling, and bussiness metrics. Conda environments ensure reproducible execution.
 
-2. Experiment Tracking & Model Registry
+## Machine Learning Pipelines
 
+All workflows are orchestrated using **Kedro**, enabling modular, reproducible pipelines.
 
-flowchart LR
+- Feature engineering and training executed as Kedro pipelines
+- Parameters, metrics, and artifacts logged to **MLflow**
+- Models registered and versioned in MLflow Model Registry
 
-    A[Ingest Data] --> B[Schema Validation]
-    B --> C[Range & Constraint Checks]
-    C --> D[Type Casting]
-    D --> E[EDA & Feature Engineering]
-    E --> F[Model Training]
-    F --> G[Evaluation & Business Metrics]
-    G -->|Log Params & Metrics| H[MLflow Tracking]
+Inference services dynamically load the current **Production** model from the registry.
 
-    
-MLflow Tracking logs parameters, metrics, and artifacts. Models are registered and versioned in MLflow Model Registry. Enables controlled promotion (using aliases) of models to production stages.
-
-
-**CI/CD Pipeline**
---- 
-The project uses GitHub Actions for continuous integration:
-
-- Triggered on each push to the repository
-
-- Builds Docker images for training and inference services
-
-- Pushes versioned images to DockerHub
-
-- Kubernetes automatically pulls the latest images during deployment
-
-This ensures consistent and automated delivery from code to production.
-
-
-
-**Containerization & Deployment**
 ---
-1. **Docker**
 
-- All services are containerized for environmental consistency
+## Containerization & Deployment
 
+- All components are containerized using **Docker**
 - The same images are used locally and in Kubernetes
+- A Kubernetes cluster runs:
+  - MLflow Tracking & Registry
+  - FastAPI Inference Service
 
-2. **Kubernetes**
+Training runs as containerized jobs; inference runs as a long-lived service.
 
-The cluster runs two main services:
-
-- MLflow API: experiment tracking and model registry
-
-- FastAPI Inference Service: serves predictions using the registered model
-
-During deployment, Kubernetes pulls the latest image from DockerHub, and the Kedro experiments are executed inside the cluster. FastAPI loads the production model directly from MLflow Registry.
-
-
-
-**Monitoring & Metrics**
 ---
 
-- Model performance metrics are logged and tracked in MLflow
+## CI/CD Pipeline
 
-- Business-level metrics are computed via dedicated Kedro pipelines
+**GitHub Actions** automates delivery:
 
-- Enables traceability between data, experiments, and deployed models
+1. Build Docker images for training and inference
+2. Push versioned images to DockerHub
+3. Kubernetes pulls and deploys updated images
 
-**Technology Stack**
+This ensures a consistent and auditable deployment process.
+
 ---
 
-Pipeline Orchestration: Kedro
+## Model Serving
 
-Data Validation: Great Expectations
+- **FastAPI** exposes a REST endpoint for predictions
+- The service loads the production model dynamically from MLflow
+- Model updates do not require API redeployment
 
-Experiment Tracking & Registry: MLflow
+---
 
-API Service: FastAPI
+## Monitoring & Metrics
 
-Containerization: Docker, Docker Compose
+- Model performance metrics tracked in **MLflow**
+- Business metrics computed within the **Kedro** pipeline
+.*
 
-CI/CD: GitHub Actions
+---
 
-Deployment: Kubernetes
+## Technology Stack
 
-Version Control: Git
+- Orchestration: Kedro  
+- Data Validation: Great Expectations  
+- Tracking & Registry: MLflow  
+- API: FastAPI  
+- Containerization: Docker  
+- CI/CD: GitHub Actions  
+- Deployment: Kubernetes  
 
+---
 
+## Why This Project Matters
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+This project demonstrates how machine learning systems can be built with **production constraints in mind**, emphasizing maintainability, automation, and operational safety rather than ad-hoc experimentation.
 
