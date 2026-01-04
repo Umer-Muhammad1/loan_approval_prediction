@@ -40,7 +40,7 @@ spec:
       volumes:
         - name: mlflow-storage
           persistentVolumeClaim:
-            claimName: mlflow-pvc1
+            claimName: mlflow-pvc
         # env:
         #   # This tells the underlying server to ignore the Host header check
         #   - name: MLFLOW_GUNICORN_OPTS
@@ -53,7 +53,7 @@ spec:
       volumes:
         - name: mlflow-storage
           persistentVolumeClaim:
-            claimName: mlflow-pvc1
+            claimName: mlflow-pvc
 ---
 # 2. MLFLOW INTERNAL SERVICE
 apiVersion: v1
